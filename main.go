@@ -6,8 +6,11 @@ import (
 )
 
 func main() {
-	tags := []string{"A", "B", "C"}
+	tags := []trellis.Tag{"A", "B", "C"}
 	size := 10
-	t := trellis.New(tags, size)
-	fmt.Printf(t)
+	initialState := trellis.InitialState{}
+	transition := trellis.Transition{}
+	emission := trellis.Emission{}
+	t := trellis.New(tags, size, initialState, transition, emission)
+	fmt.Printf("%s\n", t)
 }

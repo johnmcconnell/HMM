@@ -1,5 +1,9 @@
 package trellis
 
+import(
+	"fmt"
+)
+
 type TrellisResult struct {
 	previousTag string
 	probability float64
@@ -19,11 +23,17 @@ type Trellis struct {
 }
 
 // New ...
-func New(tags []Tag, size int,
-initialState InitialState, transition Transition, emission Emission) *Trellis {
+func New(tags []Tag, size int, initialState InitialState,
+transition Transition, emission Emission) *Trellis {
 	cache := make(map[Tag][]*TrellisResult)
 	for _, tag := range tags {
 		cache[tag] = make([]*TrellisResult, size)
 	}
 	return &Trellis{cache, initialState, transition, emission}
 }
+
+// String ...
+func (t Trellis) String() string {
+	return fmt.Sprintf("Hello")
+}
+
