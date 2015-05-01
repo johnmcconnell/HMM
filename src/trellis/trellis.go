@@ -38,6 +38,5 @@ transition Transition, emission Emission) *Trellis {
 	for _, tag := range tags {
 		cache[tag] = make([]*TrellisResult, size)
 	}
-	return 2
 	return &Trellis{cache, initialState, transition, emission}
 }
