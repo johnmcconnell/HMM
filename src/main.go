@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/johnmcconnell/hmm/trellis"
+	"github.com/johnmcconnell/hmm/src/trellis"
 )
 
 func main() {
@@ -12,5 +12,5 @@ func main() {
 	transition := trellis.Transition{}
 	emission := trellis.Emission{}
 	t := trellis.New(tags, size, initialState, transition, emission)
-	fmt.Printf("%s\n", t.Test())
+	fmt.Printf("%s\n", t)
 }

@@ -22,16 +22,6 @@ type Trellis struct {
 	emission Emission
 }
 
-// New ...
-func New(tags []Tag, size int, initialState InitialState,
-transition Transition, emission Emission) *Trellis {
-	cache := make(map[Tag][]*TrellisResult)
-	for _, tag := range tags {
-		cache[tag] = make([]*TrellisResult, size)
-	}
-	return &Trellis{cache, initialState, transition, emission}
-}
-
 // String ...
 func (t *Trellis) String() string {
 	return fmt.Sprintf("Hello")
@@ -39,4 +29,15 @@ func (t *Trellis) String() string {
 
 func (t *Trellis) Test() string {
 	return "blah"
+}
+
+// New ...
+func New(tags []Tag, size int, initialState InitialState,
+transition Transition, emission Emission) *Trellis {
+	cache := make(map[Tag][]*TrellisResult)
+	for _, tag := range tags {
+		cache[tag] = make([]*TrellisResult, size)
+	}
+	return 2
+	return &Trellis{cache, initialState, transition, emission}
 }
