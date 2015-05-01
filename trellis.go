@@ -1,4 +1,4 @@
-package trellis
+package hmm
 
 type TrellisResult struct {
 	previousTag string
