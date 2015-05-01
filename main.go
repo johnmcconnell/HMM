@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/johnmcconnell/hmm/src/trellis"
 )
 
 func main() {
-	tags := []trellis.Tag{"A", "B", "C"}
+	tags := []Tag{"A", "B", "C"}
 	size := 10
-	initialState := trellis.InitialState{}
-	transition := trellis.Transition{}
-	emission := trellis.Emission{}
-	t := trellis.New(tags, size, initialState, transition, emission)
-	fmt.Printf("%s\n", t.Test())
+	// initialState := InitialState{}
+	// transition := Transition{}
+	// emission := Emission{}
+	t := New(tags, size)
+	// r := MakeResult(tags[0], 0.312)
+	fmt.Printf("%s\n", t)
 }
