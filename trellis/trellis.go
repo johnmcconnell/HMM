@@ -33,7 +33,10 @@ transition Transition, emission Emission) *Trellis {
 }
 
 // String ...
-func (t Trellis) String() string {
+func (t *Trellis) String() string {
 	return fmt.Sprintf("Hello")
 }
 
+func (t *Trellis) Test() string {
+	return "blah"
+}

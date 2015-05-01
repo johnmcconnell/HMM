@@ -12,5 +12,5 @@ func main() {
 	transition := trellis.Transition{}
 	emission := trellis.Emission{}
 	t := trellis.New(tags, size, initialState, transition, emission)
-	fmt.Printf("%s\n", t)
+	fmt.Printf("%s\n", t.Test())
 }
