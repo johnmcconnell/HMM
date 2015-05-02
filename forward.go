@@ -71,14 +71,15 @@ func (v *Forward) P(tag Tag, index int) *Result {
 
 // SumP ...
 func (v *Forward) SumP(tag Tag, index int) *Result {
-	sumResult := &Result{"e", 0.0}
   value := v.sequence[index]
+	sumResult := &Result{"e", 0.0}
 	for _, givenTag := range v.tags {
 		prevResult := (*v.trellis)[givenTag][index - 1]
+		p := prevResult.probability
 		pT := v.transition.P(tag, givenTag)
-		pE := v.emission.P(tag, value)
-		p := prevResult.probability * pT * pE
-		sumResult.probability += p
+		sumResult.probability += pT * p
 	}
+  pE := v.emission.P(tag, value)
+	sumResult.probability = sumResult.probability * pE
 	return sumResult
 }
