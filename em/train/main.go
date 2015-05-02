@@ -29,10 +29,10 @@ func main() {
 }
 
 // Tags ...
-func (c *labeledCache) Tags() []hmm.Tag {
-	tags := make([]hmm.Tag, len(c))
+func (c *LabeledCache) Tags() []hmm.Tag {
+	tags := make([]hmm.Tag, len(*c))
 	i := 0
-	for tag, _ := range c {
+	for tag, _ := range *c {
 		tags[i] = tag
 		i += 1
 	}
@@ -51,6 +51,7 @@ func CheckTestParse(cache LabeledCache, sentences [][]hmm.LabeledWord) {
 	}
 }
 
+// ParseTraining ...
 func ParseTraining(filename string) [][]string {
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -79,6 +80,7 @@ func ParseTraining(filename string) [][]string {
 	return sentences
 }
 
+// ParseLexicon ...
 func ParseLexicon(filename string) LabeledCache {
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -108,6 +110,7 @@ func ParseLexicon(filename string) LabeledCache {
 	return lC
 }
 
+// ParseLexiconLine ...
 func ParseLexiconLine(line string) (string, []string) {
 	whiteSpace, err := regexp.Compile("\\s+")
 	if err != nil {

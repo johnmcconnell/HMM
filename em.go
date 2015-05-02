@@ -1,9 +1,15 @@
 package hmm
 
-type EM struct{}
+type EM struct{
+	sentences [][]string
+	i InitialState
+	t Transition
+	e Emission
+}
 
-func NewEM(sentences [][]string) *EM {
-	return &EM{}
+func NewEM(sentences [][]string,
+i InitialState, t Transition, e Emission) *EM {
+	return &EM{sentences, i, t, e}
 }
 
 func (e *EM) String() string {
