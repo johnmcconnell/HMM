@@ -15,9 +15,6 @@ func main() {
 	}
 	ParseTraining(os.Args[1])
 	ParseTest(os.Args[2])
-
-	//fmt.Println("%v", training)
-	//fmt.Println("%v", test)
 }
 
 func ParseTraining(filename string) [][]string {
@@ -31,13 +28,16 @@ func ParseTraining(filename string) [][]string {
 		fmt.Printf("%s\n", err)
 		os.Exit(-1)
 	}
-	newLine, err := regexp.Compile("\\s*\\n[\\n\\s]*")
+	newLine, err := regexp.Compile("[\\s\\n]*\\n[\\s\\n]*")
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(-1)
 	}
 	raw := string(bytes)
 	lines := newLine.Split(raw, -1)
+	if "" == lines[len(lines) - 1] {
+	  lines = lines[:len(lines) - 1]
+	}
 	sentences := make([][]string, len(lines))
 	for i, line := range lines {
 		sentences[i] = whiteSpace.Split(line, -1)
@@ -51,9 +51,6 @@ func ParseTest(filename string) [][]hmm.LabeledWord {
 	for iS, sentence := range sentences {
 		labeledSentences[iS] = make([]hmm.LabeledWord, len(sentence))
 		for iW, word := range sentence {
-			if (iS == len(sentences) - 1) && (iW == len(sentence) - 1) {
-				fmt.Printf("Sentence: '%s'\n", sentence)
-			}
 			labeledSentences[iS][iW] = hmm.ParseLabeledWord(word)
 		}
 	}

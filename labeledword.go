@@ -3,6 +3,7 @@ package hmm
 import(
 	"strings"
 	"fmt"
+	"os"
 )
 
 type LabeledWord struct {
@@ -14,7 +15,7 @@ func ParseLabeledWord(word string) LabeledWord {
 	split := strings.Split(word, "_")
 	if len(split) < 2 {
 		fmt.Printf("'%s' is not labelable\n", word)
-		return LabeledWord{"", Tag("")}
+		os.Exit(-1)
 	}
 	literal := split[0]
 	tag := Tag(split[1])
