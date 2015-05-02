@@ -52,14 +52,20 @@ func(g *Gamma) ComputeTransitionProb(tag1, tag2 Tag, i int) float64 {
 	return pF * pT * pB * pE
 }
 
-// TagMass ...
-func(g *Gamma) TagMass(tag Tag) float64 {
+// ComputeColumnSum ...
+func (g *Gamma) ComputeColumnSum(index int) float64 {
 	pSum := 0.0
-	for i, _ := range g.sequence {
-		p := g.ComputeProb(tag, i)
-		pSum += p
+	for _, tag := range g.tags {
+		rF := (*g.forward.trellis)[tag][index]
+		rB := (*g.backward.trellis)[tag][index]
+		pSum += (rF.Probability * rB.Probability)
 	}
 	return pSum
+}
+
+// InitialMass ...
+func(g *Gamma) InitialMass(tag Tag) float64 {
+	return g.ComputeProb(tag, 0)
 }
 
 // TransitionMass ...
@@ -72,7 +78,13 @@ func(g *Gamma) TransitionMass(tag1, tag2 Tag) float64 {
 		  pSum += p
 		}
 	}
-	return pSum
+	// P(tag1, tag2 | w) / P(w)
+	return pSum / g.ComputeSentenceProb()
+}
+
+// ComputeSentenceProb ...
+func(g *Gamma) ComputeSentenceProb() float64 {
+	return g.ComputeColumnSum(0)
 }
 
 // SumRowString ...
@@ -97,13 +109,8 @@ func (g *Gamma) RowString(tag Tag) string {
 
 // SumColumn
 func (g *Gamma) SumColumn(index int) *Result {
-	prob := 0.0
-	for _, tag := range g.tags {
-		rF := (*g.forward.trellis)[tag][index]
-		rB := (*g.backward.trellis)[tag][index]
-		prob += (rF.Probability * rB.Probability)
-	}
-	return &Result{"e", prob}
+	p := g.ComputeColumnSum(index)
+	return &Result{"e", p}
 }
 
 // Result ...
