@@ -14,18 +14,38 @@ type Config struct {
 }
 
 func main() {
-	if len(os.Args) < 3 {
-		fmt.Println("Usage: sequence config.yml")
+	if len(os.Args) < 4 {
+		fmt.Println("Usage: algo sequence config.yml")
 		os.Exit(-1)
 	}
 
 	c := Config{}
-	utils.ReadYAML(os.Args[2], &c)
+	utils.ReadYAML(os.Args[3], &c)
 
+	seq := os.Args[2]
+	algo := os.Args[1]
+	if algo == "viterbi" {
+		RunViterbi(seq, c)
+	} else if algo == "forward" {
+		RunForward(seq, c)
+	} else {
+		fmt.Printf("Undefined algo '%s'\n", algo)
+		os.Exit(-1)
+	}
+}
+
+func RunViterbi(sequence string, c Config) {
 	e := c.EmissionOfConfig()
-	v := NewViterbi(c.Tags, os.Args[1], &c.I, &c.T, &e)
+	v := NewViterbi(c.Tags, sequence, &c.I, &c.T, &e)
 	v.FillTrellis()
 	fmt.Printf("%s\n", v)
+}
+
+func RunForward(sequence string, c Config) {
+	e := c.EmissionOfConfig()
+	f := NewForward(c.Tags, sequence, &c.I, &c.T, &e)
+	f.FillTrellis()
+	fmt.Printf("%s\n", f)
 }
 
 func (c *Config) EmissionOfConfig() Emission {
