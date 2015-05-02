@@ -5,13 +5,14 @@ import (
 	"os"
 	"bytes"
 	"git.enova.com/zsyed/utils"
+	"github.com/johnmcconnell/hmm"
 )
 
 type Config struct {
-	Tags []Tag
-	I InitialState
-	T Transition
-	E map[Tag]map[string]float64
+	Tags []hmm.Tag
+	I hmm.InitialState
+	T hmm.Transition
+	E map[hmm.Tag]map[string]float64
 }
 
 func main() {
@@ -43,21 +44,21 @@ func main() {
 
 func RunViterbi(sequence string, c Config) {
 	e := c.EmissionOfConfig()
-	v := NewViterbi(c.Tags, sequence, &c.I, &c.T, &e)
+	v := hmm.NewViterbi(c.Tags, sequence, &c.I, &c.T, &e)
 	v.FillTrellis()
 	fmt.Printf("%s\n", v)
 }
 
 func RunForward(sequence string, c Config) {
 	e := c.EmissionOfConfig()
-	f := NewForward(c.Tags, sequence, &c.I, &c.T, &e)
+	f := hmm.NewForward(c.Tags, sequence, &c.I, &c.T, &e)
 	f.FillTrellis()
 	fmt.Printf("%s\n", f)
 }
 
 func RunBackward(sequence string, c Config) {
 	e := c.EmissionOfConfig()
-	b := NewBackward(c.Tags, sequence, &c.I, &c.T, &e)
+	b := hmm.NewBackward(c.Tags, sequence, &c.I, &c.T, &e)
 	b.FillTrellis()
 	fmt.Printf("%s\n", b)
 }
@@ -65,22 +66,22 @@ func RunBackward(sequence string, c Config) {
 
 func RunGamma(sequence string, c Config) {
 	e := c.EmissionOfConfig()
-	g := NewGamma(c.Tags, sequence, &c.I, &c.T, &e)
+	g := hmm.NewGamma(c.Tags, sequence, &c.I, &c.T, &e)
 	fmt.Printf("%s\n", g)
 }
 
 func RunCombined(sequence string, c Config) {
 	e := c.EmissionOfConfig()
-	b := NewBackward(c.Tags, sequence, &c.I, &c.T, &e)
+	b := hmm.NewBackward(c.Tags, sequence, &c.I, &c.T, &e)
 	b.FillTrellis()
-	f := NewForward(c.Tags, sequence, &c.I, &c.T, &e)
+	f := hmm.NewForward(c.Tags, sequence, &c.I, &c.T, &e)
 	f.FillTrellis()
 	buffer := bytes.NewBufferString(fmt.Sprintf("Combined: '%s'\n|", sequence))
 	for i, _ := range sequence {
 		var sum float64 = 0.0
 		for _, tag := range c.Tags {
-			fP := (*f.trellis)[tag][i].probability
-			bP := (*b.trellis)[tag][i].probability
+			fP := f.Result(tag, i).Probability
+			bP := b.Result(tag, i).Probability
 			sum += (bP * fP)
 		}
 		buffer.WriteString(fmt.Sprintf(" i: '%v' %.4f |", i, sum))
@@ -88,8 +89,8 @@ func RunCombined(sequence string, c Config) {
 	fmt.Println(buffer.String())
 }
 
-func (c *Config) EmissionOfConfig() Emission {
-	e := Emission{}
+func (c *Config) EmissionOfConfig() hmm.Emission {
+	e := hmm.Emission{}
 	for tag, probs  := range c.E {
 		p := make(map[uint8]float64)
 		for s, prob := range probs {

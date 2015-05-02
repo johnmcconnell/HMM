@@ -1,4 +1,4 @@
-package main
+package hmm
 
 type InitialState map[Tag]float64
 type Transition map[Tag]map[Tag]float64

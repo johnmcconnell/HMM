@@ -1,4 +1,4 @@
-package main
+package hmm
 
 import(
 	"fmt"
@@ -37,7 +37,7 @@ func (g *Gamma) SumRowString() string {
 	for i, _ := range g.sequence {
 		r := &Result{"e", 0.0}
 		for _, tag := range g.tags {
-		  r.probability += g.Result(tag, i).probability
+		  r.Probability += g.Result(tag, i).Probability
 		}
 		buffer.WriteString(r.String())
 	}
@@ -58,5 +58,5 @@ func (g *Gamma) RowString(tag Tag) string {
 func (v *Gamma) Result(tag Tag, index int) *Result {
 	rF := (*v.forward.trellis)[tag][index]
 	rB := (*v.backward.trellis)[tag][index]
-	return &Result{tag, rF.probability * rB.probability}
+	return &Result{tag, rF.Probability * rB.Probability}
 }

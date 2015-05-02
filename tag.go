@@ -1,3 +1,3 @@
-package main
+package hmm
 
 type Tag string

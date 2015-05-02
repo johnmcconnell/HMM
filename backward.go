@@ -1,4 +1,4 @@
-package main
+package hmm
 
 import(
 	"fmt"
@@ -73,10 +73,10 @@ func (v *Backward) SumP(givenTag Tag, index int) *Result {
 	sumResult := &Result{"e", 0.0}
 	for _, tag := range v.tags {
 		nextResult := (*v.trellis)[givenTag][index + 1]
-		p := nextResult.probability
+		p := nextResult.Probability
 		pT := v.transition.P(tag, givenTag)
 		pE := v.emission.P(tag, value)
-		sumResult.probability += pE * pT * p
+		sumResult.Probability += pE * pT * p
 	}
 	return sumResult
 }

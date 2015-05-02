@@ -1,4 +1,4 @@
-package main
+package hmm
 
 import(
 	"fmt"
@@ -80,11 +80,11 @@ func (v *Viterbi) MaxP(tag Tag, index int) *Result {
 		prevResult := (*v.trellis)[givenTag][index - 1]
 		pT := v.transition.P(tag, givenTag)
 		pE := v.emission.P(tag, value)
-		p := prevResult.probability * pT * pE
+		p := prevResult.Probability * pT * pE
 		if (maxResult == nil) {
 			maxResult = &Result{givenTag, p}
 		}
-		if (maxResult.probability < p) {
+		if (maxResult.Probability < p) {
 			maxResult = &Result{givenTag, p}
 		}
 	}
@@ -99,7 +99,7 @@ func (v *Viterbi) MaxResult(index int) *Result {
 		if (maxResult == nil) {
 			maxResult = currResult
 		}
-		if (maxResult.probability < currResult.probability) {
+		if (maxResult.Probability < currResult.Probability) {
 			maxResult = currResult
 		}
 	}
@@ -112,9 +112,9 @@ func (v *Viterbi) MaxTag(index int) Tag {
 	var maxProb float64 = 0.0
 	for _, tag := range v.tags {
 		currResult := (*v.trellis)[tag][index]
-		if (maxProb < currResult.probability) {
+		if (maxProb < currResult.Probability) {
 			maxTag = tag
-			maxProb = currResult.probability
+			maxProb = currResult.Probability
 		}
 	}
 	return maxTag

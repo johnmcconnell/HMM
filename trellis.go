@@ -1,4 +1,4 @@
-package main
+package hmm
 
 import(
 	"fmt"
@@ -7,7 +7,7 @@ import(
 
 type Result struct {
 	previousTag Tag
-	probability float64
+	Probability float64
 }
 
 type Trellis map[Tag][]*Result
@@ -33,7 +33,7 @@ func (t *Trellis) RowString(tag Tag, results []*Result) string {
 
 // String ...
 func (r *Result) String() string {
-	return fmt.Sprintf("'%v': %.6fp|", r.previousTag, r.probability)
+	return fmt.Sprintf("'%v': %.6fp|", r.previousTag, r.Probability)
 }
 
 // New ...
