@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"bytes"
 	"git.enova.com/zsyed/utils"
 )
 
@@ -28,6 +29,12 @@ func main() {
 		RunViterbi(seq, c)
 	} else if algo == "forward" {
 		RunForward(seq, c)
+	} else if algo == "backward" {
+		RunBackward(seq, c)
+	} else if algo == "combined" {
+		RunCombined(seq, c)
+	} else if algo == "gamma" {
+		RunGamma(seq, c)
 	} else {
 		fmt.Printf("Undefined algo '%s'\n", algo)
 		os.Exit(-1)
@@ -46,6 +53,39 @@ func RunForward(sequence string, c Config) {
 	f := NewForward(c.Tags, sequence, &c.I, &c.T, &e)
 	f.FillTrellis()
 	fmt.Printf("%s\n", f)
+}
+
+func RunBackward(sequence string, c Config) {
+	e := c.EmissionOfConfig()
+	b := NewBackward(c.Tags, sequence, &c.I, &c.T, &e)
+	b.FillTrellis()
+	fmt.Printf("%s\n", b)
+}
+
+
+func RunGamma(sequence string, c Config) {
+	e := c.EmissionOfConfig()
+	g := NewGamma(c.Tags, sequence, &c.I, &c.T, &e)
+	fmt.Printf("%s\n", g)
+}
+
+func RunCombined(sequence string, c Config) {
+	e := c.EmissionOfConfig()
+	b := NewBackward(c.Tags, sequence, &c.I, &c.T, &e)
+	b.FillTrellis()
+	f := NewForward(c.Tags, sequence, &c.I, &c.T, &e)
+	f.FillTrellis()
+	buffer := bytes.NewBufferString(fmt.Sprintf("Combined: '%s'\n|", sequence))
+	for i, _ := range sequence {
+		var sum float64 = 0.0
+		for _, tag := range c.Tags {
+			fP := (*f.trellis)[tag][i].probability
+			bP := (*b.trellis)[tag][i].probability
+			sum += (bP * fP)
+		}
+		buffer.WriteString(fmt.Sprintf(" i: '%v' %.4f |", i, sum))
+	}
+	fmt.Println(buffer.String())
 }
 
 func (c *Config) EmissionOfConfig() Emission {

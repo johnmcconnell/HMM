@@ -109,7 +109,7 @@ func (v *Viterbi) MaxResult(index int) *Result {
 // MaxTag ...
 func (v *Viterbi) MaxTag(index int) Tag {
 	var maxTag Tag = ""
-	maxProb := 0.0
+	var maxProb float64 = 0.0
 	for _, tag := range v.tags {
 		currResult := (*v.trellis)[tag][index]
 		if (maxProb < currResult.probability) {
