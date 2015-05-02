@@ -23,8 +23,8 @@ func main() {
 
 	train := ParseTraining(os.Args[1])
 
-	em := hmm.NewEM(train, i, t, e)
-
+	em := hmm.NewEM(tags, train, i, t, e)
+	em = em.Next()
 	fmt.Printf("%s\n", em)
 }
 

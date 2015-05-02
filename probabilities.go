@@ -16,6 +16,14 @@ func (e *Emission) P(tag Tag, value string) float64 {
 	return (*e)[tag][value]
 }
 
+func NewTransition(tags []Tag) Transition {
+	t := make(Transition)
+	for _, tag := range tags {
+		t[tag] = make(map[Tag]float64)
+	}
+	return t
+}
+
 func UniformI(tags []Tag) InitialState {
 	iS := make(InitialState)
 	l := len(tags)

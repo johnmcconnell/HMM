@@ -22,6 +22,7 @@ func NewGamma(tags []Tag, sequence []string, i *InitialState, t *Transition, e *
 	return &g
 }
 
+// String ...
 func (g *Gamma) String() string {
 	buffer := bytes.NewBufferString(fmt.Sprintf("Gamma: '%s'\n", g.sequence))
 	for _, tag := range g.tags {
@@ -29,6 +30,49 @@ func (g *Gamma) String() string {
 	}
 	buffer.WriteString(g.SumRowString())
 	return fmt.Sprintf("%s\n", buffer.String())
+}
+
+// ComputeProb ...
+func (g *Gamma) ComputeProb(tag Tag, index int) float64 {
+	rF := (*g.forward.trellis)[tag][index]
+	rB := (*g.backward.trellis)[tag][index]
+	rSum := g.SumColumn(index)
+	return (rF.Probability * rB.Probability) / rSum.Probability
+}
+
+// ComputeTransitionProb ...
+func(g *Gamma) ComputeTransitionProb(tag1, tag2 Tag, i int) float64 {
+	t := *g.forward.transition
+	e := *g.forward.emission
+	value := g.sequence[i]
+	pF := (*g.forward.trellis)[tag1][i].Probability
+	pT := t[tag2][tag1]
+	pB := (*g.backward.trellis)[tag2][i + 1].Probability
+	pE := e[tag2][value]
+	return pF * pT * pB * pE
+}
+
+// TagMass ...
+func(g *Gamma) TagMass(tag Tag) float64 {
+	pSum := 0.0
+	for i, _ := range g.sequence {
+		p := g.ComputeProb(tag, i)
+		pSum += p
+	}
+	return pSum
+}
+
+// TransitionMass ...
+func(g *Gamma) TransitionMass(tag1, tag2 Tag) float64 {
+	pSum := 0.0
+	limit := len(g.sequence) - 1
+	for i, _ := range g.sequence {
+		if (i < limit) {
+		  p := g.ComputeTransitionProb(tag1, tag2, i)
+		  pSum += p
+		}
+	}
+	return pSum
 }
 
 // SumRowString ...
@@ -64,9 +108,6 @@ func (g *Gamma) SumColumn(index int) *Result {
 
 // Result ...
 func (g *Gamma) Result(tag Tag, index int) *Result {
-	rF := (*g.forward.trellis)[tag][index]
-	rB := (*g.backward.trellis)[tag][index]
-	rSum := g.SumColumn(index)
-	prob := (rF.Probability * rB.Probability) / rSum.Probability
-	return &Result{tag, prob}
+	p := g.ComputeProb(tag, index)
+	return &Result{tag, p}
 }
