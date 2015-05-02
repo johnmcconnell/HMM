@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"bytes"
+	"strings"
 	"git.enova.com/zsyed/utils"
 	"github.com/johnmcconnell/hmm"
 )
@@ -24,7 +25,7 @@ func main() {
 	c := Config{}
 	utils.ReadYAML(os.Args[3], &c)
 
-	seq := os.Args[2]
+	seq := strings.Split(os.Args[2], "")
 	algo := os.Args[1]
 	if algo == "viterbi" {
 		RunViterbi(seq, c)
@@ -42,21 +43,21 @@ func main() {
 	}
 }
 
-func RunViterbi(sequence string, c Config) {
+func RunViterbi(sequence []string, c Config) {
 	e := c.EmissionOfConfig()
 	v := hmm.NewViterbi(c.Tags, sequence, &c.I, &c.T, &e)
 	v.FillTrellis()
 	fmt.Printf("%s\n", v)
 }
 
-func RunForward(sequence string, c Config) {
+func RunForward(sequence []string, c Config) {
 	e := c.EmissionOfConfig()
 	f := hmm.NewForward(c.Tags, sequence, &c.I, &c.T, &e)
 	f.FillTrellis()
 	fmt.Printf("%s\n", f)
 }
 
-func RunBackward(sequence string, c Config) {
+func RunBackward(sequence []string, c Config) {
 	e := c.EmissionOfConfig()
 	b := hmm.NewBackward(c.Tags, sequence, &c.I, &c.T, &e)
 	b.FillTrellis()
@@ -64,13 +65,13 @@ func RunBackward(sequence string, c Config) {
 }
 
 
-func RunGamma(sequence string, c Config) {
+func RunGamma(sequence []string, c Config) {
 	e := c.EmissionOfConfig()
 	g := hmm.NewGamma(c.Tags, sequence, &c.I, &c.T, &e)
 	fmt.Printf("%s\n", g)
 }
 
-func RunCombined(sequence string, c Config) {
+func RunCombined(sequence []string, c Config) {
 	e := c.EmissionOfConfig()
 	b := hmm.NewBackward(c.Tags, sequence, &c.I, &c.T, &e)
 	b.FillTrellis()
@@ -92,9 +93,9 @@ func RunCombined(sequence string, c Config) {
 func (c *Config) EmissionOfConfig() hmm.Emission {
 	e := hmm.Emission{}
 	for tag, probs  := range c.E {
-		p := make(map[uint8]float64)
+		p := make(map[string]float64)
 		for s, prob := range probs {
-			p[s[0]] = prob
+			p[s] = prob
 		}
 		e[tag] = p
 	}

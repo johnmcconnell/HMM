@@ -7,8 +7,8 @@ import(
 )
 
 type LabeledWord struct {
-	word string
-	tag Tag
+	Word string
+	Tag Tag
 }
 
 func ParseLabeledWord(word string) LabeledWord {

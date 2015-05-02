@@ -8,7 +8,7 @@ import(
 
 type Viterbi struct {
 	tags []Tag
-	sequence string
+	sequence []string
 	filled bool
 	trellis *Trellis
 	initialState *InitialState
@@ -17,7 +17,7 @@ type Viterbi struct {
 }
 
 // NewViterbi ...
-func NewViterbi(tags []Tag, sequence string, i *InitialState, t *Transition, e *Emission) *Viterbi {
+func NewViterbi(tags []Tag, sequence []string, i *InitialState, t *Transition, e *Emission) *Viterbi {
 	trellis := NewTrellis(tags, len(sequence))
 	v := Viterbi{tags, sequence, false, trellis, i, t, e}
 	return &v

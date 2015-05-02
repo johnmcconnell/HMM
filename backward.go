@@ -7,7 +7,7 @@ import(
 
 type Backward struct {
 	tags []Tag
-	sequence string
+	sequence []string
 	filled bool
 	trellis *Trellis
 	initialState *InitialState
@@ -16,7 +16,7 @@ type Backward struct {
 }
 
 // NewViterb ...
-func NewBackward(tags []Tag, sequence string, i *InitialState, t *Transition, e *Emission) *Backward {
+func NewBackward(tags []Tag, sequence []string, i *InitialState, t *Transition, e *Emission) *Backward {
 	trellis := NewTrellis(tags, len(sequence))
 	v := Backward{tags, sequence, false, trellis, i, t, e}
 	return &v
@@ -69,7 +69,7 @@ func (v *Backward) P(tag Tag, index int) *Result {
 
 // SumP ...
 func (v *Backward) SumP(givenTag Tag, index int) *Result {
-  value := v.sequence[index + 1]
+	value := v.sequence[index + 1]
 	sumResult := &Result{"e", 0.0}
 	for _, tag := range v.tags {
 		nextResult := (*v.trellis)[givenTag][index + 1]

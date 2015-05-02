@@ -7,7 +7,7 @@ import(
 
 type Forward struct {
 	tags []Tag
-	sequence string
+	sequence []string
 	filled bool
 	trellis *Trellis
 	initialState *InitialState
@@ -16,7 +16,7 @@ type Forward struct {
 }
 
 // NewViterb ...
-func NewForward(tags []Tag, sequence string, i *InitialState, t *Transition, e *Emission) *Forward {
+func NewForward(tags []Tag, sequence []string, i *InitialState, t *Transition, e *Emission) *Forward {
 	trellis := NewTrellis(tags, len(sequence))
 	v := Forward{tags, sequence, false, trellis, i, t, e}
 	return &v
