@@ -23,12 +23,23 @@ func NewViterbi(tags []Tag, sequence []string, i *InitialState, t *Transition, e
 	return &v
 }
 
+// String ...
 func (v *Viterbi) String() string {
 	buffer := bytes.NewBufferString(fmt.Sprintf("Viterbi: '%s'\n", v.sequence))
 	buffer.WriteString(v.trellis.String())
 	p := v.Prediction()
 	buffer.WriteString(fmt.Sprintf("Prediction: %s", p))
 	return fmt.Sprintf(buffer.String())
+}
+
+// ComputeInitialProb ...
+func (v *Viterbi) ComputeInitialProb(pI, pE float64) float64 {
+	return pI * pE
+}
+
+// ComputeProb ...
+func (v *Viterbi) ComputeProb(prevMax, pE, pT float64) float64 {
+	return prevMax * pT * pE
 }
 
 // Result ...
@@ -66,7 +77,8 @@ func (v *Viterbi) P(tag Tag, index int) *Result {
 		value := v.sequence[index]
 		pI := v.initialState.P(tag)
 		pE := v.emission.P(tag, value)
-		return &Result{"e", pI * pE}
+		p := v.ComputeInitialProb(pI, pE)
+		return &Result{"e", p}
 	} else {
 	  return v.MaxP(tag, index)
 	}
@@ -80,7 +92,7 @@ func (v *Viterbi) MaxP(tag Tag, index int) *Result {
 		prevResult := (*v.trellis)[givenTag][index - 1]
 		pT := v.transition.P(tag, givenTag)
 		pE := v.emission.P(tag, value)
-		p := prevResult.Probability * pT * pE
+		p := v.ComputeProb(prevResult.Probability, pT, pE)
 		if (maxResult == nil) {
 			maxResult = &Result{givenTag, p}
 		}
@@ -119,7 +131,6 @@ func (v *Viterbi) MaxTag(index int) Tag {
 	}
 	return maxTag
 }
-
 
 // Prediction ...
 func (v *Viterbi) Prediction() string {

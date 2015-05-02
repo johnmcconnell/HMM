@@ -22,10 +22,28 @@ func NewForward(tags []Tag, sequence []string, i *InitialState, t *Transition, e
 	return &v
 }
 
+// String ...
 func (v *Forward) String() string {
 	buffer := bytes.NewBufferString(fmt.Sprintf("Forward: '%s'\n", v.sequence))
 	buffer.WriteString(v.trellis.String())
 	return fmt.Sprintf(buffer.String())
+}
+
+// ComputeInitialProb ...
+func (v *Forward) ComputeInitialProb(pI, pE float64) float64 {
+	return pI * pE
+}
+
+// ComputeProb ...
+func (v *Forward) ComputeProb(tag Tag, index int, pE float64) float64 {
+	pSum := 0.0
+	for _, givenTag := range v.tags {
+		prevResult := (*v.trellis)[givenTag][index - 1]
+		prevP := prevResult.Probability
+		pT := v.transition.P(tag, givenTag)
+		pSum += pT * prevP
+	}
+	return pE * pSum
 }
 
 // Result ...
@@ -59,27 +77,14 @@ func (v *Forward) FillColumn(index int) {
 
 // P ...
 func (v *Forward) P(tag Tag, index int) *Result {
-	if index == 0 {
-		value := v.sequence[index]
-		pI := v.initialState.P(tag)
-		pE := v.emission.P(tag, value)
-		return &Result{"e", pI * pE}
-	} else {
-	  return v.SumP(tag, index)
-	}
-}
-
-// SumP ...
-func (v *Forward) SumP(tag Tag, index int) *Result {
   value := v.sequence[index]
-	sumResult := &Result{"e", 0.0}
-	for _, givenTag := range v.tags {
-		prevResult := (*v.trellis)[givenTag][index - 1]
-		p := prevResult.Probability
-		pT := v.transition.P(tag, givenTag)
-		sumResult.Probability += pT * p
-	}
   pE := v.emission.P(tag, value)
-	sumResult.Probability = sumResult.Probability * pE
-	return sumResult
+	if index == 0 {
+		pI := v.initialState.P(tag)
+		p := v.ComputeInitialProb(pI, pE)
+		return &Result{"e", p}
+	} else {
+		p := v.ComputeProb(tag, index, pE)
+		return &Result{"e", p}
+	}
 }
