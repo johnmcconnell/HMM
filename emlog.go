@@ -81,15 +81,27 @@ func (e *EMLog) Check(iP *InitialState, tP *Transition, eP *Emission) {
 }
 
 func (e *EMLog) MStep(iP, tC *InitialState, tP *Transition, eP *Emission) {
-	lS := len(e.sentences)
+	lS := float64(len(e.sentences))
 	for _, tag := range e.tags {
-		(*iP)[tag] = (*iP)[tag] / float64(lS)
+		p := (*iP)[tag] / lS
+		if (p > 1.0) {
+			log.Printf("IP(%s) = %v = (%v / %v)", tag, p, (*iP)[tag], lS)
+		}
+		(*iP)[tag] = p
 		tagCount := (*tC)[tag]
 		for _, tag2 := range e.tags {
-			(*tP)[tag][tag2] = (*tP)[tag][tag2] / tagCount
+			p = (*tP)[tag][tag2] / tagCount
+			if (p > 1.0) {
+				log.Printf("TP(%s|%s) = %v = (%v / %v)", tag2, tag, p, (*tP)[tag][tag2], tagCount)
+			}
+			(*tP)[tag][tag2] = p
 		}
 		for word, _ := range (*eP)[tag] {
-			(*eP)[tag][word] = (*eP)[tag][word] / tagCount
+			p = (*eP)[tag][word] / tagCount
+			if (p > 1.0) {
+				log.Printf("EP(%s|%s) = %v = (%v / %v)", word, tag, p, (*eP)[tag][word], tagCount)
+			}
+			(*eP)[tag][word] = p
 		}
 	}
 	e.Check(iP, tP, eP)

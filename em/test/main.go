@@ -19,7 +19,7 @@ func main() {
 		os.Exit(-1)
 	}
 	train := ParseTest(os.Args[1])
-	test := ParseTest(os.Args[1])
+	test := ParseTest(os.Args[2])
 
 	CheckParse(train, test)
 	a := Accuracy(train, test)

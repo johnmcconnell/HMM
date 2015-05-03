@@ -28,7 +28,7 @@ func main() {
 
 	em := hmm.NewEMLog2(tags, train, i, t, e)
 
-	i, t, e = EMLoop(0, em)
+	i, t, e = EMLoop(200, em)
 	lSentences := BuildLabeled(train, tags, i, t, e)
 
 	PrintLabeledSentences(lSentences)
@@ -90,10 +90,7 @@ func PrintLabeledSentences(sentences [][]hmm.LabeledWord) {
 }
 
 func PrintLabeledSentence(sentence []hmm.LabeledWord) {
-	for i, word := range sentence {
-		if (i == 0) {
-			log.Printf("Printing... %s", word)
-		}
+	for _, word := range sentence {
 		fmt.Printf("%s ", word.String())
 	}
 	fmt.Println()
