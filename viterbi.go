@@ -28,7 +28,9 @@ func (v *Viterbi) String() string {
 	buffer := bytes.NewBufferString(fmt.Sprintf("Viterbi: '%s'\n", v.sequence))
 	buffer.WriteString(v.trellis.String())
 	p := v.Prediction()
-	buffer.WriteString(fmt.Sprintf("Prediction: %s", p))
+	buffer.WriteString(fmt.Sprintf("Prediction: %s\n", p))
+	l := v.Labelled()
+	buffer.WriteString(fmt.Sprintf("Prediction: %s\n", l))
 	return fmt.Sprintf(buffer.String())
 }
 
@@ -144,4 +146,23 @@ func (v *Viterbi) Prediction() string {
 		tags = append([]string{string(previousTag)}, tags...)
 	}
 	return strings.Join(tags, "")
+}
+
+func (v *Viterbi) Labelled() []LabeledWord {
+	l := len(v.sequence) - 1
+	prevTag := v.MaxTag(l)
+	word := v.sequence[l]
+	label := LabeledWord{word, prevTag}
+	tags := []LabeledWord{label}
+	for i, _ := range v.sequence {
+		if (i < l) {
+			reverseI := l - i
+			r := (*v.trellis)[prevTag][reverseI]
+			prevTag = r.previousTag
+			word = v.sequence[i]
+			label := LabeledWord{word, prevTag}
+			tags = append([]LabeledWord{label}, tags...)
+		}
+	}
+	return tags
 }

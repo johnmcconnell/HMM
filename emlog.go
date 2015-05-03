@@ -59,3 +59,7 @@ func (e *EMLog) MStep(iP, tC *InitialState, tP *Transition, eP *Emission) {
 		}
 	}
 }
+
+func (e *EMLog) I() InitialState { return e.i }
+func (e *EMLog) T() Transition { return e.t }
+func (e *EMLog) E() Emission { return e.e }

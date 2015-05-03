@@ -23,9 +23,20 @@ func main() {
 
 	train := ParseTraining(os.Args[1])
 
-	em := hmm.NewEM(tags, train, i, t, e)
+	em := hmm.NewEMLog(tags, train, i, t, e)
 	em = em.Next()
-	fmt.Printf("%s\n", em)
+
+	i = em.I()
+	t = em.T()
+	e = em.E()
+	BuildLabeled(train, tags, i, t, e)
+}
+
+func BuildLabeled(sentences [][]string, tags []hmm.Tag, i hmm.InitialState, t hmm.Transition, e hmm.Emission) {
+	for _, sentence := range sentences {
+	  v := hmm.NewViterbi(tags, sentence, &i, &t, &e)
+		v.FillTrellis()
+	}
 }
 
 // Tags ...
