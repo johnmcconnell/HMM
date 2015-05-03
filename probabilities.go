@@ -1,5 +1,9 @@
 package hmm
 
+import(
+	"log"
+)
+
 type InitialState map[Tag]float64
 type Transition map[Tag]map[Tag]float64
 type Emission map[Tag]map[string]float64
@@ -35,20 +39,26 @@ func NewTransition(tags []Tag) Transition {
 func UniformI(tags []Tag) InitialState {
 	iS := make(InitialState)
 	l := len(tags)
+	sum := 0.0
 	for _, tag := range tags {
 		iS[tag] = 1.0 / float64(l)
+		sum += iS[tag]
 	}
+	log.Printf("S total %v\n", sum)
 	return iS
 }
 
 func UniformT(tags []Tag) Transition {
 	t := make(Transition)
-	l := len(tags)
+	l := float64(len(tags))
 	for _, tag1 := range tags {
 		t[tag1] = make(map[Tag]float64)
+		sum := 0.0
 		for _, tag2 := range tags {
-			t[tag1][tag2] = 1.0 / float64(l)
+			t[tag1][tag2] = 1.0 / l
+			sum += t[tag1][tag2]
 		}
+		log.Printf("T(%s) total %v\n", tag1, sum)
 	}
 	return t
 }
@@ -57,10 +67,13 @@ func UniformE2(tags []Tag, words map[string]bool) Emission {
 	e := make(Emission)
 	for _, tag := range tags {
 		e[tag] = make(map[string]float64)
-		l := len(words)
+		l := float64(len(words))
+		sum := 0.0
 		for word, _ := range words {
-			e[tag][word] = 1.0 / float64(l)
+			e[tag][word] = 1.0 / l
+			sum += e[tag][word]
 		}
+		log.Printf("E(%s) total %v\n", tag, sum)
 	}
 	return e
 }

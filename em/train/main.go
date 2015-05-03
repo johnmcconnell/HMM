@@ -18,15 +18,18 @@ func main() {
 		fmt.Println("Usage: train_file lexicon_file")
 		os.Exit(-1)
 	}
-	cache, words := ParseLexicon(os.Args[2])
-	tags := cache.Tags()
+	tagCache, wordCache := ParseLexicon(os.Args[2])
+	tags := tagCache.Tags()
+	words := wordCache.Words()
+
+	log.Printf("len: %v", len(tags))
 	i := hmm.UniformI(tags)
 	t := hmm.UniformT(tags)
-	e := hmm.UniformE2(tags, words)
+	e := hmm.UniformE2(tags, wordCache)
 
 	train := ParseTraining(os.Args[1])
 
-	em := hmm.NewEMLog2(tags, train, i, t, e)
+	em := hmm.NewEMLog2(tags, words, train, i, t, e)
 
 	i, t, e = EMLoop(8, em)
 	lSentences := BuildLabeled(train, tags, i, t, e)
@@ -118,6 +121,17 @@ t hmm.Transition, e hmm.Emission) [][]hmm.LabeledWord {
 		}
 	}
 	return labeledSentences
+}
+
+// Words ...
+func (c *WordCache) Words() []string {
+	words := make([]string, len(*c))
+	i := 0
+	for word, _ := range *c {
+		words[i] = word
+		i += 1
+	}
+	return words
 }
 
 // Tags ...
