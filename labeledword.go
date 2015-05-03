@@ -11,6 +11,10 @@ type LabeledWord struct {
 	Tag Tag
 }
 
+func (w *LabeledWord) String() string {
+	return fmt.Sprintf("%s_%s", w.Word, w.Tag)
+}
+
 func ParseLabeledWord(word string) LabeledWord {
 	split := strings.Split(word, "_")
 	if len(split) < 2 {

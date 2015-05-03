@@ -4,6 +4,7 @@ import(
 	"os"
 	"fmt"
 	"log"
+	"math"
 	"io/ioutil"
 	"regexp"
 	"github.com/johnmcconnell/hmm"
@@ -26,21 +27,59 @@ func main() {
 
 	em := hmm.NewEMLog(tags, train, i, t, e)
 
-	i, t, e = EMLoop(2, em)
+	i, t, e = EMLoop(50, em)
 	lSentences := BuildLabeled(train, tags, i, t, e)
 
 	PrintLabeledSentences(lSentences)
 }
 
 func EMLoop(index int, em *hmm.EMLog) (hmm.InitialState, hmm.Transition, hmm.Emission) {
-	for x := 0; x < index; x++ {
-		em = em.Next()
-	  log.Printf("Finished %v EM training\n", x)
-	}
 	i := em.I()
 	t := em.T()
 	e := em.E()
+	for x := 0; x < index; x++ {
+		em = em.Next()
+	  log.Printf("Finished %v EM training\n", x)
+		prevT := t
+		prevE := e
+		i = em.I()
+		t = em.T()
+		e = em.E()
+		if Converges(prevT, t, prevE, e) {
+	    log.Printf("Converges!\n", x)
+			break
+		}
+	}
 	return i, t, e
+}
+
+func Converges(t1, t2 hmm.Transition, e1, e2 hmm.Emission) bool {
+	con := true
+	for givenTag, _ := range t1 {
+		for tag, _ := range t1[givenTag] {
+			t1P := t1[givenTag][tag]
+			t2P := t2[givenTag][tag]
+			diff := math.Abs(t1P - t2P)
+			if (diff > 0.01) {
+				con = false
+			}
+			if (diff > 0.3) {
+				log.Printf("diff '%v', T(%s|%s)", diff, tag, givenTag)
+			}
+		}
+		for word, _ := range e2[givenTag] {
+			e1P := e1[givenTag][word]
+			e2P := e2[givenTag][word]
+			diff := math.Abs(e1P - e2P)
+			if (diff > 0.01) {
+				con = false
+			}
+			if (diff > 0.3) {
+				log.Printf("diff '%v', E(%s|%s)", diff, word, givenTag)
+			}
+		}
+	}
+	return con
 }
 
 func PrintLabeledSentences(sentences [][]hmm.LabeledWord) {
@@ -66,6 +105,7 @@ t hmm.Transition, e hmm.Emission) [][]hmm.LabeledWord {
 		labeled, err := v.Labeled()
 		if err != nil {
 			log.Println("Sentence unable to be labeled")
+			log.Printf("%s\n",v)
 		  labeledSentences[iS] = make([]hmm.LabeledWord, 0)
 		} else {
 		  labeledSentences[iS] = labeled
