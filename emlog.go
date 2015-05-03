@@ -1,5 +1,7 @@
 package hmm
 
+import "math"
+
 type EMLog struct{
 	tags []Tag
 	sentences [][]string
@@ -18,10 +20,9 @@ func (e *EMLog) String() string {
 }
 
 func (e *EMLog) Next() *EMLog {
-	eNext := *e
 	iP, tP, eP, tC := e.EStep()
 	e.MStep(iP, tC, tP, eP)
-	return &eNext
+	return NewEMLog(e.tags, e.sentences, *iP, *tP, *eP)
 }
 
 func (e *EMLog) EStep() (*InitialState, *Transition, *Emission, *InitialState) {
@@ -30,14 +31,14 @@ func (e *EMLog) EStep() (*InitialState, *Transition, *Emission, *InitialState) {
 	eCount := NewEmission(e.tags)
 	tCount := NewTransition(e.tags)
 	for _, sentence := range e.sentences {
-		g := NewGamma(e.tags, sentence, &e.i, &e.t, &e.e)
+		g := NewGammaLog(e.tags, sentence, &e.i, &e.t, &e.e)
 		for _, tag := range e.tags {
-			iCount[tag] += g.InitialMass(tag)
+			iCount[tag] += math.Exp(g.InitialMass(tag))
 			for _, tag2 := range e.tags {
-				tCount[tag][tag2] += g.TransitionMass(tag, tag2)
+				tCount[tag][tag2] += math.Exp(g.TransitionMass(tag, tag2))
 			}
 			for i, word := range sentence {
-				p := g.ComputeProb(tag, i)
+				p := math.Exp(g.ComputeProb(tag, i))
 				eCount[tag][word] += p
 				tagCount[tag] += p
 			}

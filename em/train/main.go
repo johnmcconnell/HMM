@@ -3,6 +3,7 @@ package main
 import(
 	"os"
 	"fmt"
+	"log"
 	"io/ioutil"
 	"regexp"
 	"github.com/johnmcconnell/hmm"
@@ -25,12 +26,21 @@ func main() {
 
 	em := hmm.NewEMLog(tags, train, i, t, e)
 
-	i = em.I()
-	t = em.T()
-	e = em.E()
+	i, t, e = EMLoop(2, em)
 	lSentences := BuildLabeled(train, tags, i, t, e)
 
 	PrintLabeledSentences(lSentences)
+}
+
+func EMLoop(index int, em *hmm.EMLog) (hmm.InitialState, hmm.Transition, hmm.Emission) {
+	for x := 0; x < index; x++ {
+		em = em.Next()
+	  log.Printf("Finished %v EM training\n", x)
+	}
+	i := em.I()
+	t := em.T()
+	e := em.E()
+	return i, t, e
 }
 
 func PrintLabeledSentences(sentences [][]hmm.LabeledWord) {
@@ -55,10 +65,13 @@ t hmm.Transition, e hmm.Emission) [][]hmm.LabeledWord {
 		v.FillTrellis()
 		labeled, err := v.Labeled()
 		if err != nil {
-			fmt.Println("This sentence is fucked")
+			log.Println("Sentence unable to be labeled")
 		  labeledSentences[iS] = make([]hmm.LabeledWord, 0)
 		} else {
 		  labeledSentences[iS] = labeled
+		}
+		if (iS % 100 == 0) {
+			log.Println("Finished 100 sentences")
 		}
 	}
 	return labeledSentences

@@ -5,7 +5,7 @@ import(
 	"bytes"
 )
 
-type GammaLog struct {
+type Gamma struct {
 	tags []Tag
 	sequence []string
 	forward *Forward
@@ -13,18 +13,18 @@ type GammaLog struct {
 }
 
 // NewViterb ...
-func NewGammaLog(tags []Tag, sequence []string, i *InitialState, t *Transition, e *Emission) *GammaLog {
+func NewGamma(tags []Tag, sequence []string, i *InitialState, t *Transition, e *Emission) *Gamma {
 	b := NewBackward(tags, sequence, i, t, e)
 	b.FillTrellis()
 	f := NewForward(tags, sequence, i, t, e)
 	f.FillTrellis()
-	g := GammaLog{tags, sequence, f, b}
+	g := Gamma{tags, sequence, f, b}
 	return &g
 }
 
 // String ...
-func (g *GammaLog) String() string {
-	buffer := bytes.NewBufferString(fmt.Sprintf("GammaLog: '%s'\n", g.sequence))
+func (g *Gamma) String() string {
+	buffer := bytes.NewBufferString(fmt.Sprintf("Gamma: '%s'\n", g.sequence))
 	for _, tag := range g.tags {
 		buffer.WriteString(g.RowString(tag))
 	}
@@ -33,7 +33,7 @@ func (g *GammaLog) String() string {
 }
 
 // ComputeProb ...
-func (g *GammaLog) ComputeProb(tag Tag, index int) float64 {
+func (g *Gamma) ComputeProb(tag Tag, index int) float64 {
 	rF := (*g.forward.trellis)[tag][index]
 	rB := (*g.backward.trellis)[tag][index]
 	rSum := g.SumColumn(index)
@@ -41,7 +41,7 @@ func (g *GammaLog) ComputeProb(tag Tag, index int) float64 {
 }
 
 // ComputeTransitionProb ...
-func(g *GammaLog) ComputeTransitionProb(tag1, tag2 Tag, i int) float64 {
+func(g *Gamma) ComputeTransitionProb(tag1, tag2 Tag, i int) float64 {
 	t := *g.forward.transition
 	e := *g.forward.emission
 	value := g.sequence[i]
@@ -53,7 +53,7 @@ func(g *GammaLog) ComputeTransitionProb(tag1, tag2 Tag, i int) float64 {
 }
 
 // ComputeColumnSum ...
-func (g *GammaLog) ComputeColumnSum(index int) float64 {
+func (g *Gamma) ComputeColumnSum(index int) float64 {
 	pSum := 0.0
 	for _, tag := range g.tags {
 		rF := (*g.forward.trellis)[tag][index]
@@ -64,12 +64,12 @@ func (g *GammaLog) ComputeColumnSum(index int) float64 {
 }
 
 // InitialMass ...
-func(g *GammaLog) InitialMass(tag Tag) float64 {
+func(g *Gamma) InitialMass(tag Tag) float64 {
 	return g.ComputeProb(tag, 0)
 }
 
 // TransitionMass ...
-func(g *GammaLog) TransitionMass(tag1, tag2 Tag) float64 {
+func(g *Gamma) TransitionMass(tag1, tag2 Tag) float64 {
 	pSum := 0.0
 	limit := len(g.sequence) - 1
 	for i, _ := range g.sequence {
@@ -83,12 +83,12 @@ func(g *GammaLog) TransitionMass(tag1, tag2 Tag) float64 {
 }
 
 // ComputeSentenceProb ...
-func(g *GammaLog) ComputeSentenceProb() float64 {
+func(g *Gamma) ComputeSentenceProb() float64 {
 	return g.ComputeColumnSum(0)
 }
 
 // SumRowString ...
-func (g *GammaLog) SumRowString() string {
+func (g *Gamma) SumRowString() string {
 	buffer := bytes.NewBufferString("|Sum: ' '|")
 	for i, _ := range g.sequence {
 		r := g.SumColumn(i)
@@ -98,7 +98,7 @@ func (g *GammaLog) SumRowString() string {
 }
 
 // RowString ...
-func (g *GammaLog) RowString(tag Tag) string {
+func (g *Gamma) RowString(tag Tag) string {
 	buffer := bytes.NewBufferString(fmt.Sprintf("|Tag: '%v'|", tag))
 	for i, _ := range g.sequence {
 		buffer.WriteString(g.Result(tag, i).String())
@@ -108,13 +108,13 @@ func (g *GammaLog) RowString(tag Tag) string {
 }
 
 // SumColumn
-func (g *GammaLog) SumColumn(index int) *Result {
+func (g *Gamma) SumColumn(index int) *Result {
 	p := g.ComputeColumnSum(index)
 	return &Result{"e", p}
 }
 
 // Result ...
-func (g *GammaLog) Result(tag Tag, index int) *Result {
+func (g *Gamma) Result(tag Tag, index int) *Result {
 	p := g.ComputeProb(tag, index)
 	return &Result{tag, p}
 }

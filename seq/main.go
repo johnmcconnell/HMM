@@ -43,6 +43,7 @@ func main() {
 		RunBackwardLog(seq, c)
 	} else if algo == "gammalog" {
 		RunGammaLog(seq, c)
+	} else {
 		fmt.Printf("Undefined algo '%s'\n", algo)
 		os.Exit(-1)
 	}
