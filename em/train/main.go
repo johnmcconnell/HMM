@@ -31,7 +31,6 @@ func main() {
 	i, t, e = EMLoop(0, em)
 	lSentences := BuildLabeled(train, tags, i, t, e)
 
-	CheckParse(cache, lSentences)
 	PrintLabeledSentences(lSentences)
 }
 
@@ -105,7 +104,7 @@ tags []hmm.Tag, i hmm.InitialState,
 t hmm.Transition, e hmm.Emission) [][]hmm.LabeledWord {
 	labeledSentences := make([][]hmm.LabeledWord, len(sentences))
 	for iS, sentence := range sentences {
-	  v := hmm.NewViterbi(tags, sentence, &i, &t, &e)
+	  v := hmm.NewViterbiLog(tags, sentence, &i, &t, &e)
 		v.FillTrellis()
 		labeled, err := v.Labeled()
 		if err != nil {
@@ -139,7 +138,7 @@ func CheckParse(cache LabeledCache, sentences [][]hmm.LabeledWord) {
 		for _, word := range sentence {
 			if !cache[word.Tag][word.Word] {
 				log.Printf("'%s' was not found in lexicon cache \n", word)
-				os.Exit(-1)
+				log.Printf("C[%s] has [%s]\n", word.Tag, cache[word.Tag])
 			}
 		}
 	}

@@ -4,12 +4,13 @@ import(
 	"fmt"
 	"bytes"
 	"errors"
-	"math"
 	"strings"
+	"math"
 	"log"
+	"github.com/johnmcconnell/gologspace"
 )
 
-type Viterbi struct {
+type ViterbiLog struct {
 	tags []Tag
 	sequence []string
 	filled bool
@@ -19,16 +20,16 @@ type Viterbi struct {
 	emission *Emission
 }
 
-// NewViterbi ...
-func NewViterbi(tags []Tag, sequence []string, i *InitialState, t *Transition, e *Emission) *Viterbi {
+// NewViterbiLog ...
+func NewViterbiLog(tags []Tag, sequence []string, i *InitialState, t *Transition, e *Emission) *ViterbiLog {
 	trellis := NewTrellis(tags, len(sequence))
-	v := Viterbi{tags, sequence, false, trellis, i, t, e}
+	v := ViterbiLog{tags, sequence, false, trellis, i, t, e}
 	return &v
 }
 
 // String ...
-func (v *Viterbi) String() string {
-	buffer := bytes.NewBufferString(fmt.Sprintf("Viterbi: '%s'\n", v.sequence))
+func (v *ViterbiLog) String() string {
+	buffer := bytes.NewBufferString(fmt.Sprintf("ViterbiLog: '%s'\n", v.sequence))
 	buffer.WriteString(v.trellis.String())
 	p := v.Prediction()
 	buffer.WriteString(fmt.Sprintf("Prediction: %s\n", p))
@@ -38,17 +39,17 @@ func (v *Viterbi) String() string {
 }
 
 // ComputeInitialProb ...
-func (v *Viterbi) ComputeInitialProb(pI, pE float64) float64 {
-	return pI * pE
+func (v *ViterbiLog) ComputeInitialProb(pI, pE float64) float64 {
+	return pI + pE
 }
 
 // ComputeProb ...
-func (v *Viterbi) ComputeProb(prevMax, pE, pT float64) float64 {
-	return prevMax * pT * pE
+func (v *ViterbiLog) ComputeProb(prevMax, pE, pT float64) float64 {
+	return prevMax + pT + pE
 }
 
 // Result ...
-func (v *Viterbi) Result(index int) *Result {
+func (v *ViterbiLog) Result(index int) *Result {
 	if !v.filled {
 		v.FillTrellis()
 	}
@@ -56,7 +57,7 @@ func (v *Viterbi) Result(index int) *Result {
 }
 
 // FillTrellis ...
-func (v *Viterbi) FillTrellis() {
+func (v *ViterbiLog) FillTrellis() {
 	if v.filled {
 		return
 	}
@@ -67,7 +68,7 @@ func (v *Viterbi) FillTrellis() {
 }
 
 // FillColumn ...
-func (v *Viterbi) FillColumn(index int) {
+func (v *ViterbiLog) FillColumn(index int) {
 	if v.filled {
 		return
 	}
@@ -77,11 +78,11 @@ func (v *Viterbi) FillColumn(index int) {
 }
 
 // P ...
-func (v *Viterbi) P(tag Tag, index int) *Result {
+func (v *ViterbiLog) P(tag Tag, index int) *Result {
 	if index == 0 {
 		value := v.sequence[index]
-		pI := v.initialState.P(tag)
-		pE := v.emission.P(tag, value)
+		pI := gologspace.LogProb(v.initialState.P(tag))
+		pE := gologspace.LogProb(v.emission.P(tag, value))
 		p := v.ComputeInitialProb(pI, pE)
 		return &Result{"e", p}
 	} else {
@@ -90,13 +91,13 @@ func (v *Viterbi) P(tag Tag, index int) *Result {
 }
 
 // MaxP ...
-func (v *Viterbi) MaxP(tag Tag, index int) *Result {
+func (v *ViterbiLog) MaxP(tag Tag, index int) *Result {
 	var maxResult *Result = nil
   value := v.sequence[index]
 	for _, givenTag := range v.tags {
 		prevResult := (*v.trellis)[givenTag][index - 1]
-		pT := v.transition.P(tag, givenTag)
-		pE := v.emission.P(tag, value)
+		pT := gologspace.LogProb(v.transition.P(tag, givenTag))
+		pE := gologspace.LogProb(v.emission.P(tag, value))
 		p := v.ComputeProb(prevResult.Probability, pT, pE)
 		if (maxResult == nil) {
 			maxResult = &Result{givenTag, p}
@@ -109,7 +110,7 @@ func (v *Viterbi) MaxP(tag Tag, index int) *Result {
 }
 
 // MaxResult ...
-func (v *Viterbi) MaxResult(index int) *Result {
+func (v *ViterbiLog) MaxResult(index int) *Result {
 	var maxResult *Result = nil
 	for _, tag := range v.tags {
 		currResult := (*v.trellis)[tag][index]
@@ -124,7 +125,7 @@ func (v *Viterbi) MaxResult(index int) *Result {
 }
 
 // MaxTag ...
-func (v *Viterbi) MaxTag(index int) Tag {
+func (v *ViterbiLog) MaxTag(index int) Tag {
 	var maxTag Tag = ""
 	maxProb := math.Inf(-1)
 	for _, tag := range v.tags {
@@ -138,7 +139,7 @@ func (v *Viterbi) MaxTag(index int) Tag {
 }
 
 // Prediction ...
-func (v *Viterbi) Prediction() string {
+func (v *ViterbiLog) Prediction() string {
 	l := len(v.sequence)
 	previousTag := v.MaxTag(l - 1)
 	tags := []string{string(previousTag)}
@@ -151,7 +152,7 @@ func (v *Viterbi) Prediction() string {
 	return strings.Join(tags, "")
 }
 
-func (v *Viterbi) Labeled() ([]LabeledWord, error) {
+func (v *ViterbiLog) Labeled() ([]LabeledWord, error) {
 	l := len(v.sequence) - 1
 	tag := v.MaxTag(l)
 	if (tag == "") {

@@ -43,6 +43,8 @@ func main() {
 		RunBackwardLog(seq, c)
 	} else if algo == "gammalog" {
 		RunGammaLog(seq, c)
+	} else if algo == "viterbilog" {
+		RunViterbiLog(seq, c)
 	} else {
 		fmt.Printf("Undefined algo '%s'\n", algo)
 		os.Exit(-1)
@@ -52,6 +54,13 @@ func main() {
 func RunViterbi(sequence []string, c Config) {
 	e := c.EmissionOfConfig()
 	v := hmm.NewViterbi(c.Tags, sequence, &c.I, &c.T, &e)
+	v.FillTrellis()
+	fmt.Printf("%s\n", v)
+}
+
+func RunViterbiLog(sequence []string, c Config) {
+	e := c.EmissionOfConfig()
+	v := hmm.NewViterbiLog(c.Tags, sequence, &c.I, &c.T, &e)
 	v.FillTrellis()
 	fmt.Printf("%s\n", v)
 }

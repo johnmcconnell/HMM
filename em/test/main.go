@@ -3,38 +3,78 @@ package main
 import(
 	"os"
 	"fmt"
+	"log"
 	"io/ioutil"
 	"regexp"
 	"github.com/johnmcconnell/hmm"
 )
 
+type WordCache map[string]bool
 type LabeledCache map[hmm.Tag]map[string]bool
+type ConfusionMatrix map[hmm.Tag]map[hmm.Tag]float64
 
 func main() {
-	if len(os.Args) < 4 {
-		fmt.Println("Usage: train_file test_file lexicon_file")
+	if len(os.Args) < 3 {
+		fmt.Println("Usage: train_file test_file")
 		os.Exit(-1)
 	}
-	cache := ParseLexicon(os.Args[3])
-	// train := ParseTraining(os.Args[1])
-	test := ParseTest(os.Args[2])
-	CheckTestParse(cache, test)
+	train := ParseTest(os.Args[1])
+	test := ParseTest(os.Args[1])
 
-	// fmt.Printf("%s\n", test)
+	CheckParse(train, test)
+	a := Accuracy(train, test)
+	m := ConfustionMatrix(train, test)
+	fmt.Printf("Accuracy: %.4fp\n", a * 100)
 }
 
-// CheckTestParse ...
-func CheckTestParse(cache LabeledCache, sentences [][]hmm.LabeledWord) {
-	for _, sentence := range sentences {
-		for _, word := range sentence {
-			if !cache[word.Tag][word.Word] {
-				fmt.Println("'%s' was not found in lexicon cache", word)
-				os.Exit(-1)
+func ConfusionMaxtrix(s1, s2 [][]hmm.LabeledWord) ConfusionMatrix {
+	m := make(ConfustionMatrix)
+	for iS, _ := range s1 {
+		for iW, _ := range s1[iS] {
+			l1, l2 := s1[iS][iW], s2[iS][iW]
+			if (l1 != l2) {
+				if (m[l1.Tag] == nil) {
+					m[l1.Tag] = make(map[hmm.Tag]float64)
+				}
+				m[l1.Tag][l2.Tag] += 1.0
 			}
+		}
+	}
+  return m
+}
+
+func Accuracy(s1, s2 [][]hmm.LabeledWord) float64 {
+	total := 0.0
+	correct := 0.0
+	for iS, _ := range s1 {
+		for iW, _ := range s1[iS] {
+			l1, l2 := s1[iS][iW], s2[iS][iW]
+			if (l1 == l2) {
+				correct += 1
+			}
+			total += 1.0
+		}
+	}
+  return correct / total
+}
+
+// CheckParse ...
+func CheckParse(s1, s2 [][]hmm.LabeledWord) {
+	l1, l2 := len(s1), len(s2)
+	if (l2 != l1) {
+		log.Printf("s1=%v vs s2=%v", l1, l2)
+		os.Exit(-1)
+	}
+	for i, _ := range s1 {
+		l1, l2 := len(s1[i]), len(s2[i])
+		if (l2 != l1) {
+			log.Printf("s1[%v]=%v vs s2[%v]=%v", l1, l2)
+			os.Exit(-1)
 		}
 	}
 }
 
+// ParseTraining ...
 func ParseTraining(filename string) [][]string {
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -63,47 +103,7 @@ func ParseTraining(filename string) [][]string {
 	return sentences
 }
 
-func ParseLexicon(filename string) LabeledCache {
-	bytes, err := ioutil.ReadFile(filename)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		os.Exit(-1)
-	}
-	newLine, err := regexp.Compile("[\\s\\n]*\\n[\\s\\n]*")
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		os.Exit(-1)
-	}
-	raw := string(bytes)
-	lines := newLine.Split(raw, -1)
-	if "" == lines[len(lines) - 1] {
-	  lines = lines[:len(lines) - 1]
-	}
-	lC := make(LabeledCache)
-	for _, line := range lines {
-		word, tags := ParseLexiconLine(line)
-		for _, tag := range tags {
-			if lC[hmm.Tag(tag)] == nil {
-				lC[hmm.Tag(tag)] = make(map[string]bool)
-			}
-			lC[hmm.Tag(tag)][word] = true
-		}
-	}
-	return lC
-}
-
-func ParseLexiconLine(line string) (string, []string) {
-	whiteSpace, err := regexp.Compile("\\s+")
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		os.Exit(-1)
-	}
-  parts := whiteSpace.Split(line, -1)
-	word := parts[0]
-	tags := parts[1:]
-	return word, tags
-}
-
+// ParseTest ...
 func ParseTest(filename string) [][]hmm.LabeledWord {
 	sentences := ParseTraining(filename)
 	labeledSentences := make([][]hmm.LabeledWord, len(sentences))
