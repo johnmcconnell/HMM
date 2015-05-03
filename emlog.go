@@ -1,6 +1,6 @@
 package hmm
 
-type EM struct{
+type EMLog struct{
 	tags []Tag
 	sentences [][]string
 	i InitialState
@@ -8,23 +8,23 @@ type EM struct{
 	e Emission
 }
 
-func NewEM(tags []Tag, sentences [][]string,
-i InitialState, t Transition, e Emission) *EM {
-	return &EM{tags, sentences, i, t, e}
+func NewEMLog(tags []Tag, sentences [][]string,
+i InitialState, t Transition, e Emission) *EMLog {
+	return &EMLog{tags, sentences, i, t, e}
 }
 
-func (e *EM) String() string {
+func (e *EMLog) String() string {
 	return "Hello"
 }
 
-func (e *EM) Next() *EM {
+func (e *EMLog) Next() *EMLog {
 	eNext := *e
 	iP, tP, eP, tC := e.EStep()
 	e.MStep(iP, tC, tP, eP)
 	return &eNext
 }
 
-func (e *EM) EStep() (*InitialState, *Transition, *Emission, *InitialState) {
+func (e *EMLog) EStep() (*InitialState, *Transition, *Emission, *InitialState) {
 	iCount := make(InitialState)
 	tagCount := make(InitialState)
 	eCount := NewEmission(e.tags)
@@ -46,7 +46,7 @@ func (e *EM) EStep() (*InitialState, *Transition, *Emission, *InitialState) {
 	return &iCount, &tCount, &eCount, &tagCount
 }
 
-func (e *EM) MStep(iP, tC *InitialState, tP *Transition, eP *Emission) {
+func (e *EMLog) MStep(iP, tC *InitialState, tP *Transition, eP *Emission) {
 	lS := len(e.sentences)
 	for _, tag := range e.tags {
 		(*iP)[tag] = (*iP)[tag] / float64(lS)

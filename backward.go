@@ -5,7 +5,7 @@ import(
 	"bytes"
 )
 
-type Backward struct {
+type BackwardLog struct {
 	tags []Tag
 	sequence []string
 	filled bool
@@ -16,26 +16,26 @@ type Backward struct {
 }
 
 // NewViterb ...
-func NewBackward(tags []Tag, sequence []string, i *InitialState, t *Transition, e *Emission) *Backward {
+func NewBackwardLog(tags []Tag, sequence []string, i *InitialState, t *Transition, e *Emission) *BackwardLog {
 	trellis := NewTrellis(tags, len(sequence))
-	v := Backward{tags, sequence, false, trellis, i, t, e}
+	v := BackwardLog{tags, sequence, false, trellis, i, t, e}
 	return &v
 }
 
 // String ...
-func (v *Backward) String() string {
-	buffer := bytes.NewBufferString(fmt.Sprintf("Backward: '%s'\n", v.sequence))
+func (v *BackwardLog) String() string {
+	buffer := bytes.NewBufferString(fmt.Sprintf("BackwardLog: '%s'\n", v.sequence))
 	buffer.WriteString(v.trellis.String())
 	return fmt.Sprintf(buffer.String())
 }
 
 // ComputeInitialProb ...
-func (v *Backward) ComputeInitialProb() float64 {
+func (v *BackwardLog) ComputeInitialProb() float64 {
 	return 1.0
 }
 
 // ComputeProb ...
-func (v *Backward) ComputeProb(givenTag Tag, index int) float64 {
+func (v *BackwardLog) ComputeProb(givenTag Tag, index int) float64 {
 	value := v.sequence[index + 1]
 	pSum := 0.0
 	for _, tag := range v.tags {
@@ -49,7 +49,7 @@ func (v *Backward) ComputeProb(givenTag Tag, index int) float64 {
 }
 
 // Result ...
-func (v *Backward) Result(tag Tag, index int) *Result {
+func (v *BackwardLog) Result(tag Tag, index int) *Result {
 	if !v.filled {
 		v.FillTrellis()
 	}
@@ -57,7 +57,7 @@ func (v *Backward) Result(tag Tag, index int) *Result {
 }
 
 // FillTrellis ...
-func (v *Backward) FillTrellis() {
+func (v *BackwardLog) FillTrellis() {
 	if v.filled {
 		return
 	}
@@ -69,7 +69,7 @@ func (v *Backward) FillTrellis() {
 }
 
 // FillColumn ...
-func (v *Backward) FillColumn(index int) {
+func (v *BackwardLog) FillColumn(index int) {
 	if v.filled {
 		return
 	}
@@ -79,7 +79,7 @@ func (v *Backward) FillColumn(index int) {
 }
 
 // P ...
-func (v *Backward) P(tag Tag, index int) *Result {
+func (v *BackwardLog) P(tag Tag, index int) *Result {
 	if index == (len(v.sequence) - 1) {
 		p := v.ComputeInitialProb()
 		return &Result{"e", p}
