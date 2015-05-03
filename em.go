@@ -19,28 +19,43 @@ func (e *EM) String() string {
 
 func (e *EM) Next() *EM {
 	eNext := *e
-	iP, tP, eP := e.EStep()
-	e.MStep(iP, tP, eP)
+	iP, tP, eP, tC := e.EStep()
+	e.MStep(iP, tC, tP, eP)
 	return &eNext
 }
 
-func (e *EM) EStep() (*InitialState, *Transition, *Emission) {
-	iMass := make(InitialState)
-	eMass := NewEmission(e.tags)
-	tMass := NewTransition(e.tags)
+func (e *EM) EStep() (*InitialState, *Transition, *Emission, *InitialState) {
+	iCount := make(InitialState)
+	tagCount := make(InitialState)
+	eCount := NewEmission(e.tags)
+	tCount := NewTransition(e.tags)
 	for _, sentence := range e.sentences {
 		g := NewGamma(e.tags, sentence, &e.i, &e.t, &e.e)
 		for _, tag := range e.tags {
-			iMass[tag] = g.InitialMass(tag)
+			iCount[tag] += g.InitialMass(tag)
 			for _, tag2 := range e.tags {
-				tMass[tag][tag2] = g.TransitionMass(tag, tag2)
+				tCount[tag][tag2] += g.TransitionMass(tag, tag2)
 			}
 			for i, word := range sentence {
-				eMass[tag][word] = g.ComputeProb(tag, i)
+				p := g.ComputeProb(tag, i)
+				eCount[tag][word] += p
+				tagCount[tag] += p
 			}
 		}
 	}
-	return &iMass, &tMass, &eMass
+	return &iCount, &tCount, &eCount, &tagCount
 }
 
-func (e *EM) MStep(iP *InitialState, tP *Transition, eP *Emission) { }
+func (e *EM) MStep(iP, tC *InitialState, tP *Transition, eP *Emission) {
+	lS := len(e.sentences)
+	for _, tag := range e.tags {
+		(*iP)[tag] = (*iP)[tag] / float64(lS)
+		tagCount := (*tC)[tag]
+		for _, tag2 := range e.tags {
+			(*tP)[tag][tag2] = (*tP)[tag][tag2] / tagCount
+		}
+		for word, _ := range (*eP)[tag] {
+			(*eP)[tag][word] = (*eP)[tag][word] / tagCount
+		}
+	}
+}
