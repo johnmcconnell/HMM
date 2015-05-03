@@ -23,12 +23,12 @@ func main() {
 
 	CheckParse(train, test)
 	a := Accuracy(train, test)
-	m := ConfusionMatrix(train, test)
+	m := ComputeConfusionMatrix(train, test)
 	fmt.Printf("Accuracy: %.4fp\n", a * 100)
 	fmt.Printf("Maxtrix: %v\n", m)
 }
 
-func ConfusionMaxtrix(s1, s2 [][]hmm.LabeledWord) ConfusionMatrix {
+func ComputeConfusionMatrix(s1, s2 [][]hmm.LabeledWord) ConfusionMatrix {
 	m := make(ConfusionMatrix)
 	for iS, _ := range s1 {
 		for iW, _ := range s1[iS] {
