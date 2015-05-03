@@ -3,6 +3,7 @@ package hmm
 import(
 	"fmt"
 	"bytes"
+	"log"
 	"github.com/johnmcconnell/gologspace"
 )
 
@@ -36,9 +37,14 @@ func (g *GammaLog) String() string {
 // ComputeProb ...
 func (g *GammaLog) ComputeProb(tag Tag, index int) float64 {
 	rF := (*g.forward.trellis)[tag][index]
+	pF := rF.Probability
 	rB := (*g.backward.trellis)[tag][index]
+	pB := rB.Probability
 	rSum := g.ComputeColumnSum(index)
-	return (rF.Probability + rB.Probability) - rSum
+	if ((pF + pB) - rSum) > 0 {
+		log.Printf("pF[%v] + pB[%v] - rSum[%v]", pF, pB, rSum)
+	}
+	return (pF + pB) - rSum
 }
 
 // ComputeTransitionProb ...
@@ -50,7 +56,12 @@ func(g *GammaLog) ComputeTransitionProb(tag1, tag2 Tag, i int) float64 {
 	pT := gologspace.LogProb(t[tag1][tag2])
 	pB := (*g.backward.trellis)[tag2][i + 1].Probability
 	pE := gologspace.LogProb(e[tag2][value])
-	return pF + pT + pB + pE
+	p := g.ComputeColumnSum(i)
+	a := pF + pT + pB + pE - p
+	if (a > 0) {
+		log.Printf("a[%v] = pF[%v] + pT[%v] + pB[%v] + pE[%v] - p[%v]", a, pF, pT, pB, pE, p)
+	}
+	return a
 }
 
 // ComputeColumnSum ...
@@ -89,7 +100,7 @@ func(g *GammaLog) TransitionMass(tag1, tag2 Tag) float64 {
 		}
 	}
 	// P(tag1, tag2 | w) / P(w)
-	return pSum - g.ComputeSentenceProb()
+	return pSum
 }
 
 // ComputeSentenceProb ...

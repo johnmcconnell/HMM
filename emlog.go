@@ -4,6 +4,7 @@ import(
 	"math"
 	"log"
 	"os"
+	"github.com/johnmcconnell/gologspace"
 )
 
 type EMLog struct{
@@ -43,10 +44,22 @@ func (e *EMLog) EStep() (*InitialState, *Transition, *Emission, *InitialState) {
 			iCount[tag] += math.Exp(g.InitialMass(tag))
 			for _, tag2 := range e.tags {
 				count := math.Exp(g.TransitionMass(tag, tag2))
-				if (count > 2300.0) {
-					log.Printf("TCount is way too high '%v'", count)
-				}
 				tCount[tag][tag2] += count
+				if (count > 200.0) {
+					log.Printf("TMass(%s,%s) = %v", tag, tag2, count)
+					limit := len(sentence) - 1
+					log.Printf("SProb(S) = %v", g.ComputeSentenceProb())
+					for i, _ := range sentence {
+						if (i < limit) {
+							log.Printf("TProb(%v) = %v", i, g.ComputeTransitionProb(tag, tag2, i))
+							log.Printf("pF(%v) = %v", i, (*g.forward.trellis)[tag][i].Probability)
+							log.Printf("pT(%v) = %v", i, gologspace.LogProb((*g.forward.transition)[tag][tag2]))
+							log.Printf("pB(%v) = %v", i + 1, (*g.backward.trellis)[tag2][i + 1].Probability)
+							v := g.sequence[i + 1]
+							log.Printf("pE(%v) = %v", i, gologspace.LogProb((*g.forward.emission)[tag2][v]))
+						}
+					}
+				}
 			}
 			for i, word := range sentence {
 				p := math.Exp(g.ComputeProb(tag, i))
@@ -87,25 +100,13 @@ func (e *EMLog) Check(iP *InitialState, tP *Transition, eP *Emission) {
 func (e *EMLog) MStep(iP, tC *InitialState, tP *Transition, eP *Emission) {
 	lS := float64(len(e.sentences))
 	for _, tag := range e.tags {
-		p := (*iP)[tag] / lS
-		if (p > 1.0) {
-			log.Printf("IP(%s) = %v = (%v / %v)", tag, p, (*iP)[tag], lS)
-		}
-		(*iP)[tag] = p
+		(*iP)[tag] = (*iP)[tag] / lS
 		tagCount := (*tC)[tag]
 		for _, tag2 := range e.tags {
-			p = (*tP)[tag][tag2] / tagCount
-			if (p > 1.0) {
-				log.Printf("TP(%s|%s) = %v = (%v / %v)", tag2, tag, p, (*tP)[tag][tag2], tagCount)
-			}
-			(*tP)[tag][tag2] = p
+			(*tP)[tag][tag2] = (*tP)[tag][tag2] / tagCount
 		}
 		for word, _ := range (*eP)[tag] {
-			p = (*eP)[tag][word] / tagCount
-			if (p > 1.0) {
-				log.Printf("EP(%s|%s) = %v = (%v / %v)", word, tag, p, (*eP)[tag][word], tagCount)
-			}
-			(*eP)[tag][word] = p
+			(*eP)[tag][word] = (*eP)[tag][word] / tagCount
 		}
 	}
 	e.Check(iP, tP, eP)

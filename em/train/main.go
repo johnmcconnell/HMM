@@ -49,6 +49,8 @@ func EMLoop(index int, em *hmm.EMLog) (hmm.InitialState, hmm.Transition, hmm.Emi
 		if Converges(prevT, t, prevE, e) {
 	    log.Printf("Converges!\n", x)
 			break
+		} else {
+	    log.Printf("Does not converge\n", x)
 		}
 	}
 	return i, t, e
