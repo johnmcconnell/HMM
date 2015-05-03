@@ -45,9 +45,9 @@ func (g *GammaLog) ComputeProb(tag Tag, index int) float64 {
 func(g *GammaLog) ComputeTransitionProb(tag1, tag2 Tag, i int) float64 {
 	t := *g.forward.transition
 	e := *g.forward.emission
-	value := g.sequence[i]
+	value := g.sequence[i + 1]
 	pF := (*g.forward.trellis)[tag1][i].Probability
-	pT := gologspace.LogProb(t[tag2][tag1])
+	pT := gologspace.LogProb(t[tag1][tag2])
 	pB := (*g.backward.trellis)[tag2][i + 1].Probability
 	pE := gologspace.LogProb(e[tag2][value])
 	return pF + pT + pB + pE

@@ -42,7 +42,11 @@ func (e *EMLog) EStep() (*InitialState, *Transition, *Emission, *InitialState) {
 		for _, tag := range e.tags {
 			iCount[tag] += math.Exp(g.InitialMass(tag))
 			for _, tag2 := range e.tags {
-				tCount[tag][tag2] += math.Exp(g.TransitionMass(tag, tag2))
+				count := math.Exp(g.TransitionMass(tag, tag2))
+				if (count > 2300.0) {
+					log.Printf("TCount is way too high '%v'", count)
+				}
+				tCount[tag][tag2] += count
 			}
 			for i, word := range sentence {
 				p := math.Exp(g.ComputeProb(tag, i))
