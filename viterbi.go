@@ -160,8 +160,10 @@ func (v *Viterbi) Labeled() ([]LabeledWord, error) {
 			reverseI := l - i
 			word = v.sequence[reverseI - 1]
 			q := (*v.trellis)[tag]
-			if (i >= len(q)) {
-				return nil, errors.New("Sentence could not be labeled")
+			if (reverseI >= len(q)) {
+				s := fmt.Sprintf("On '%s': i:%v vs len:%v, q[U] = %v\n", tag,
+				reverseI, len(q), (*v.trellis)["UNKNOWN"])
+				return nil, errors.New(s)
 			} else {
 				r := q[reverseI]
 				tag = r.previousTag

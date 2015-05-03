@@ -53,6 +53,18 @@ func UniformT(tags []Tag) Transition {
 	return t
 }
 
+func UniformE2(tags []Tag, words map[string]bool) Emission {
+	e := make(Emission)
+	for _, tag := range tags {
+		e[tag] = make(map[string]float64)
+		l := len(words)
+		for word, _ := range words {
+			e[tag][word] = 1.0 / float64(l)
+		}
+	}
+	return e
+}
+
 func UniformE(possibleEmissions map[Tag]map[string]bool) Emission {
 	e := make(Emission)
 	for tag, words := range possibleEmissions {

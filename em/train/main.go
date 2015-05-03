@@ -10,6 +10,7 @@ import(
 	"github.com/johnmcconnell/hmm"
 )
 
+type WordCache map[string]bool
 type LabeledCache map[hmm.Tag]map[string]bool
 
 func main() {
@@ -17,19 +18,20 @@ func main() {
 		fmt.Println("Usage: train_file lexicon_file")
 		os.Exit(-1)
 	}
-	cache := ParseLexicon(os.Args[2])
+	cache, words := ParseLexicon(os.Args[2])
 	tags := cache.Tags()
 	i := hmm.UniformI(tags)
 	t := hmm.UniformT(tags)
-	e := hmm.UniformE(cache)
+	e := hmm.UniformE2(tags, words)
 
 	train := ParseTraining(os.Args[1])
 
-	em := hmm.NewEMLog(tags, train, i, t, e)
+	em := hmm.NewEMLog2(tags, train, i, t, e)
 
-	i, t, e = EMLoop(50, em)
+	i, t, e = EMLoop(0, em)
 	lSentences := BuildLabeled(train, tags, i, t, e)
 
+	CheckParse(cache, lSentences)
 	PrintLabeledSentences(lSentences)
 }
 
@@ -89,8 +91,11 @@ func PrintLabeledSentences(sentences [][]hmm.LabeledWord) {
 }
 
 func PrintLabeledSentence(sentence []hmm.LabeledWord) {
-	for _, word := range sentence {
-		fmt.Sprintf("%s ", word)
+	for i, word := range sentence {
+		if (i == 0) {
+			log.Printf("Printing... %s", word)
+		}
+		fmt.Printf("%s ", word.String())
 	}
 	fmt.Println()
 }
@@ -104,14 +109,14 @@ t hmm.Transition, e hmm.Emission) [][]hmm.LabeledWord {
 		v.FillTrellis()
 		labeled, err := v.Labeled()
 		if err != nil {
-			log.Println("Sentence unable to be labeled")
-			log.Printf("%s\n",v)
+			log.Printf("Failed Sentence: %v\n", len(sentence))
+			log.Printf("Error: %v\n", err.Error())
 		  labeledSentences[iS] = make([]hmm.LabeledWord, 0)
 		} else {
 		  labeledSentences[iS] = labeled
 		}
-		if (iS % 100 == 0) {
-			log.Println("Finished 100 sentences")
+		if (iS % 3000 == 0) {
+			log.Println("Finished 3000 sentences")
 		}
 	}
 	return labeledSentences
@@ -129,11 +134,11 @@ func (c *LabeledCache) Tags() []hmm.Tag {
 }
 
 // CheckTestParse ...
-func CheckTestParse(cache LabeledCache, sentences [][]hmm.LabeledWord) {
+func CheckParse(cache LabeledCache, sentences [][]hmm.LabeledWord) {
 	for _, sentence := range sentences {
 		for _, word := range sentence {
 			if !cache[word.Tag][word.Word] {
-				fmt.Println("'%s' was not found in lexicon cache", word)
+				log.Printf("'%s' was not found in lexicon cache \n", word)
 				os.Exit(-1)
 			}
 		}
@@ -170,7 +175,7 @@ func ParseTraining(filename string) [][]string {
 }
 
 // ParseLexicon ...
-func ParseLexicon(filename string) LabeledCache {
+func ParseLexicon(filename string) (LabeledCache, WordCache) {
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		fmt.Printf("%s\n", err)
@@ -187,16 +192,29 @@ func ParseLexicon(filename string) LabeledCache {
 	  lines = lines[:len(lines) - 1]
 	}
 	lC := make(LabeledCache)
+	wC := make(WordCache)
 	for _, line := range lines {
 		word, tags := ParseLexiconLine(line)
 		for _, tag := range tags {
-			if lC[hmm.Tag(tag)] == nil {
-				lC[hmm.Tag(tag)] = make(map[string]bool)
+			if (tag == "") {
+				log.Printf("Tag: '%s' is in [%s]\n", tag, tags)
+				os.Exit(-1)
+				continue
 			}
-			lC[hmm.Tag(tag)][word] = true
+			if (word == "") {
+				log.Printf("Word: '%s' is blank in [%s]\n", word, line)
+				os.Exit(-1)
+				continue
+			}
+			t := hmm.Tag(tag)
+			if lC[t] == nil {
+				lC[t] = make(map[string]bool)
+			}
+			lC[t][word] = true
+			wC[word] = true
 		}
 	}
-	return lC
+	return lC, wC
 }
 
 // ParseLexiconLine ...
