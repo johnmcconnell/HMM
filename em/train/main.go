@@ -28,7 +28,7 @@ func main() {
 
 	em := hmm.NewEMLog2(tags, train, i, t, e)
 
-	i, t, e = EMLoop(200, em)
+	i, t, e = EMLoop(8, em)
 	lSentences := BuildLabeled(train, tags, i, t, e)
 
 	PrintLabeledSentences(lSentences)
@@ -63,7 +63,7 @@ func Converges(t1, t2 hmm.Transition, e1, e2 hmm.Emission) bool {
 			t1P := t1[givenTag][tag]
 			t2P := t2[givenTag][tag]
 			diff := math.Abs(t1P - t2P)
-			if (diff > 0.01) {
+			if (diff > 0.0000001) {
 				con = false
 			}
 			if (diff > 0.3) {
@@ -74,7 +74,7 @@ func Converges(t1, t2 hmm.Transition, e1, e2 hmm.Emission) bool {
 			e1P := e1[givenTag][word]
 			e2P := e2[givenTag][word]
 			diff := math.Abs(e1P - e2P)
-			if (diff > 0.01) {
+			if (diff > 0.0000001) {
 				con = false
 			}
 			if (diff > 0.3) {

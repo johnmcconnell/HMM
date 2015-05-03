@@ -57,7 +57,7 @@ func(g *GammaLog) ComputeTransitionProb(tag1, tag2 Tag, i int) float64 {
 	pB := (*g.backward.trellis)[tag2][i + 1].Probability
 	pE := gologspace.LogProb(e[tag2][value])
 	p := g.ComputeColumnSum(i)
-	a := pF + pT + pB + pE - p
+	a := pF + pT + pB + pE // - p
 	if (a > 0) {
 		log.Printf("a[%v] = pF[%v] + pT[%v] + pB[%v] + pE[%v] - p[%v]", a, pF, pT, pB, pE, p)
 	}

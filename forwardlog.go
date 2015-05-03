@@ -42,7 +42,11 @@ func (v *ForwardLog) ComputeProb(tag Tag, index int, pE float64) float64 {
 		prevResult := (*v.trellis)[givenTag][index - 1]
 		prevP := prevResult.Probability
 		pT := gologspace.LogProb(v.transition.P(tag, givenTag))
-		pSum = gologspace.LogAdd(pSum, (pT + prevP))
+		if (pSum == 0.0) {
+			pSum = (pT + prevP)
+		} else {
+			pSum = gologspace.LogAdd(pSum, (pT + prevP))
+		}
 	}
 	return pE + pSum
 }
