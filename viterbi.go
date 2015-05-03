@@ -3,6 +3,7 @@ package hmm
 import(
 	"fmt"
 	"bytes"
+	"errors"
 	"strings"
 )
 
@@ -29,8 +30,8 @@ func (v *Viterbi) String() string {
 	buffer.WriteString(v.trellis.String())
 	p := v.Prediction()
 	buffer.WriteString(fmt.Sprintf("Prediction: %s\n", p))
-	l := v.Labelled()
-	buffer.WriteString(fmt.Sprintf("Prediction: %s\n", l))
+	l, _ := v.Labeled()
+	buffer.WriteString(fmt.Sprintf("Label: %s\n", l))
 	return fmt.Sprintf(buffer.String())
 }
 
@@ -148,21 +149,26 @@ func (v *Viterbi) Prediction() string {
 	return strings.Join(tags, "")
 }
 
-func (v *Viterbi) Labelled() []LabeledWord {
+func (v *Viterbi) Labeled() ([]LabeledWord, error) {
 	l := len(v.sequence) - 1
-	prevTag := v.MaxTag(l)
+	tag := v.MaxTag(l)
 	word := v.sequence[l]
-	label := LabeledWord{word, prevTag}
+	label := LabeledWord{word, tag}
 	tags := []LabeledWord{label}
 	for i, _ := range v.sequence {
 		if (i < l) {
 			reverseI := l - i
-			r := (*v.trellis)[prevTag][reverseI]
-			prevTag = r.previousTag
-			word = v.sequence[i]
-			label := LabeledWord{word, prevTag}
-			tags = append([]LabeledWord{label}, tags...)
+			word = v.sequence[reverseI - 1]
+			q := (*v.trellis)[tag]
+			if (i >= len(q)) {
+				return nil, errors.New("Sentence could not be labeled")
+			} else {
+				r := q[reverseI]
+				tag = r.previousTag
+				label := LabeledWord{word, tag}
+				tags = append([]LabeledWord{label}, tags...)
+			}
 		}
 	}
-	return tags
+	return tags, nil
 }

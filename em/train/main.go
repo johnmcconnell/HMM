@@ -24,19 +24,44 @@ func main() {
 	train := ParseTraining(os.Args[1])
 
 	em := hmm.NewEMLog(tags, train, i, t, e)
-	em = em.Next()
 
 	i = em.I()
 	t = em.T()
 	e = em.E()
-	BuildLabeled(train, tags, i, t, e)
+	lSentences := BuildLabeled(train, tags, i, t, e)
+
+	PrintLabeledSentences(lSentences)
 }
 
-func BuildLabeled(sentences [][]string, tags []hmm.Tag, i hmm.InitialState, t hmm.Transition, e hmm.Emission) {
+func PrintLabeledSentences(sentences [][]hmm.LabeledWord) {
 	for _, sentence := range sentences {
+		PrintLabeledSentence(sentence)
+	}
+}
+
+func PrintLabeledSentence(sentence []hmm.LabeledWord) {
+	for _, word := range sentence {
+		fmt.Sprintf("%s ", word)
+	}
+	fmt.Println()
+}
+
+func BuildLabeled(sentences [][]string,
+tags []hmm.Tag, i hmm.InitialState,
+t hmm.Transition, e hmm.Emission) [][]hmm.LabeledWord {
+	labeledSentences := make([][]hmm.LabeledWord, len(sentences))
+	for iS, sentence := range sentences {
 	  v := hmm.NewViterbi(tags, sentence, &i, &t, &e)
 		v.FillTrellis()
+		labeled, err := v.Labeled()
+		if err != nil {
+			fmt.Println("This sentence is fucked")
+		  labeledSentences[iS] = make([]hmm.LabeledWord, 0)
+		} else {
+		  labeledSentences[iS] = labeled
+		}
 	}
+	return labeledSentences
 }
 
 // Tags ...

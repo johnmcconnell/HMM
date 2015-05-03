@@ -37,7 +37,12 @@ func main() {
 		RunCombined(seq, c)
 	} else if algo == "gamma" {
 		RunGamma(seq, c)
-	} else {
+	} else if algo == "forwardlog" {
+		RunForwardLog(seq, c)
+	} else if algo == "backwardlog" {
+		RunBackwardLog(seq, c)
+	} else if algo == "gammalog" {
+		RunGammaLog(seq, c)
 		fmt.Printf("Undefined algo '%s'\n", algo)
 		os.Exit(-1)
 	}
@@ -48,6 +53,26 @@ func RunViterbi(sequence []string, c Config) {
 	v := hmm.NewViterbi(c.Tags, sequence, &c.I, &c.T, &e)
 	v.FillTrellis()
 	fmt.Printf("%s\n", v)
+}
+
+func RunForwardLog(sequence []string, c Config) {
+	e := c.EmissionOfConfig()
+	f := hmm.NewForwardLog(c.Tags, sequence, &c.I, &c.T, &e)
+	f.FillTrellis()
+	fmt.Printf("%s\n", f)
+}
+
+func RunBackwardLog(sequence []string, c Config) {
+	e := c.EmissionOfConfig()
+	f := hmm.NewBackwardLog(c.Tags, sequence, &c.I, &c.T, &e)
+	f.FillTrellis()
+	fmt.Printf("%s\n", f)
+}
+
+func RunGammaLog(sequence []string, c Config) {
+	e := c.EmissionOfConfig()
+	f := hmm.NewGammaLog(c.Tags, sequence, &c.I, &c.T, &e)
+	fmt.Printf("%s\n", f)
 }
 
 func RunForward(sequence []string, c Config) {
@@ -63,7 +88,6 @@ func RunBackward(sequence []string, c Config) {
 	b.FillTrellis()
 	fmt.Printf("%s\n", b)
 }
-
 
 func RunGamma(sequence []string, c Config) {
 	e := c.EmissionOfConfig()

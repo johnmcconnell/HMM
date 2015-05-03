@@ -3,6 +3,7 @@ package hmm
 import(
 	"fmt"
 	"bytes"
+	"github.com/johnmcconnell/gologspace"
 )
 
 type ForwardLog struct {
@@ -31,7 +32,7 @@ func (v *ForwardLog) String() string {
 
 // ComputeInitialProb ...
 func (v *ForwardLog) ComputeInitialProb(pI, pE float64) float64 {
-	return pI * pE
+	return gologspace.LogAdd(pI, pE)
 }
 
 // ComputeProb ...
@@ -40,10 +41,10 @@ func (v *ForwardLog) ComputeProb(tag Tag, index int, pE float64) float64 {
 	for _, givenTag := range v.tags {
 		prevResult := (*v.trellis)[givenTag][index - 1]
 		prevP := prevResult.Probability
-		pT := v.transition.P(tag, givenTag)
-		pSum += pT * prevP
+		pT := gologspace.LogProb(v.transition.P(tag, givenTag))
+		pSum = gologspace.LogAdd(pSum, (pT + prevP))
 	}
-	return pE * pSum
+	return pE + pSum
 }
 
 // Result ...
@@ -78,9 +79,9 @@ func (v *ForwardLog) FillColumn(index int) {
 // P ...
 func (v *ForwardLog) P(tag Tag, index int) *Result {
   value := v.sequence[index]
-  pE := v.emission.P(tag, value)
+  pE := gologspace.LogProb(v.emission.P(tag, value))
 	if index == 0 {
-		pI := v.initialState.P(tag)
+		pI := gologspace.LogProb(v.initialState.P(tag))
 		p := v.ComputeInitialProb(pI, pE)
 		return &Result{"e", p}
 	} else {

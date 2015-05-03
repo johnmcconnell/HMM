@@ -3,9 +3,10 @@ package hmm
 import(
 	"fmt"
 	"bytes"
+	"github.com/johnmcconnell/gologspace"
 )
 
-type BackwardLog struct {
+type Backward struct {
 	tags []Tag
 	sequence []string
 	filled bool
@@ -16,40 +17,45 @@ type BackwardLog struct {
 }
 
 // NewViterb ...
-func NewBackwardLog(tags []Tag, sequence []string, i *InitialState, t *Transition, e *Emission) *BackwardLog {
+func NewBackward(tags []Tag, sequence []string, i *InitialState, t *Transition, e *Emission) *Backward {
 	trellis := NewTrellis(tags, len(sequence))
-	v := BackwardLog{tags, sequence, false, trellis, i, t, e}
+	v := Backward{tags, sequence, false, trellis, i, t, e}
 	return &v
 }
 
 // String ...
-func (v *BackwardLog) String() string {
-	buffer := bytes.NewBufferString(fmt.Sprintf("BackwardLog: '%s'\n", v.sequence))
+func (v *Backward) String() string {
+	buffer := bytes.NewBufferString(fmt.Sprintf("Backward: '%s'\n", v.sequence))
 	buffer.WriteString(v.trellis.String())
 	return fmt.Sprintf(buffer.String())
 }
 
 // ComputeInitialProb ...
-func (v *BackwardLog) ComputeInitialProb() float64 {
-	return 1.0
+func (v *Backward) ComputeInitialProb() float64 {
+	return gologspace.LogProb(1.0)
 }
 
 // ComputeProb ...
-func (v *BackwardLog) ComputeProb(givenTag Tag, index int) float64 {
+func (v *Backward) ComputeProb(givenTag Tag, index int) float64 {
 	value := v.sequence[index + 1]
 	pSum := 0.0
 	for _, tag := range v.tags {
 		nextResult := (*v.trellis)[givenTag][index + 1]
 		p := nextResult.Probability
-		pT := v.transition.P(tag, givenTag)
-		pE := v.emission.P(tag, value)
-		pSum += pE * pT * p
+		pT := gologspace.LogProb(v.transition.P(tag, givenTag))
+		pE := gologspace.LogProb(v.emission.P(tag, value))
+
+		if pSum == 0.0 {
+		  pSum = pE + pT + p
+		} else {
+		  pSum = gologspace.LogAdd(pSum, pE + pT + p)
+		}
 	}
 	return pSum
 }
 
 // Result ...
-func (v *BackwardLog) Result(tag Tag, index int) *Result {
+func (v *Backward) Result(tag Tag, index int) *Result {
 	if !v.filled {
 		v.FillTrellis()
 	}
@@ -57,7 +63,7 @@ func (v *BackwardLog) Result(tag Tag, index int) *Result {
 }
 
 // FillTrellis ...
-func (v *BackwardLog) FillTrellis() {
+func (v *Backward) FillTrellis() {
 	if v.filled {
 		return
 	}
@@ -69,7 +75,7 @@ func (v *BackwardLog) FillTrellis() {
 }
 
 // FillColumn ...
-func (v *BackwardLog) FillColumn(index int) {
+func (v *Backward) FillColumn(index int) {
 	if v.filled {
 		return
 	}
@@ -79,7 +85,7 @@ func (v *BackwardLog) FillColumn(index int) {
 }
 
 // P ...
-func (v *BackwardLog) P(tag Tag, index int) *Result {
+func (v *Backward) P(tag Tag, index int) *Result {
 	if index == (len(v.sequence) - 1) {
 		p := v.ComputeInitialProb()
 		return &Result{"e", p}
