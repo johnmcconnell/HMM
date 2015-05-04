@@ -87,8 +87,8 @@ func(g *Gamma) ComputeTransP(tag1, tag2 Tag, i int) float64 {
 	value := g.sequence[i + 1]
 	pF := g.forward.R(tag1, i).Prob
 	pT := t[tag1][tag2]
-	pB := g.backward.R(tag2, i + 1).Prob
 	pE := e[tag2][value]
+	pB := g.backward.R(tag2, i + 1).Prob
 	// p := g.CompColumnSum(i)
 	return g.CompTransP(pF, pT, pE, pB)
 }

@@ -31,32 +31,63 @@ s gologspace.Space, i Initial, t Transition, e Emission) *EM {
 func (e *EM) Next() *EM {
 	iP, tP, eP, tC, ttC := e.EStep()
 	e.MStep(iP, tC, ttC, tP, eP)
-	e.Check(iP, tP, eP)
-	e.ReenterSpace(iP, tP, eP)
+	// e.Check(iP, tP, eP)
+	//e.Apply(iP, tP, eP, e.s.Enter)
 	return NewEM(e.tags, e.words, e.sentences, e.s, *iP, *tP, *eP)
 }
 
 func (e *EM) EStep() (*Initial, *Transition, *Emission, *Initial, *Initial) {
 	iCount := make(Initial)
-	tagCount := make(Initial)
-	tagTagCount := make(Initial)
 	eCount := NewEmission(e.tags)
 	tCount := NewTransition(e.tags)
+	tagCount := make(Initial)
+	tagTagCount := make(Initial)
+
 	for iS, sentence := range e.sentences {
 		g := NewGamma(e.tags, sentence, e.s, &e.i, &e.t, &e.e)
 		for _, tag := range e.tags {
-			iCount[tag] += e.s.Exit(g.InitialMass(tag))
-			for _, tag2 := range e.tags {
-				count := e.s.Exit(g.TransMass(tag, tag2))
-				tCount[tag][tag2] += count
+
+			iTMass := g.InitialMass(tag)
+			// Must check if unitialized or log add won't work.
+			if iCount[tag] == 0.0 {
+				iCount[tag] = iTMass
+			} else {
+				iCount[tag] = e.s.Add(iCount[tag], iTMass)
 			}
-			limit := len(sentence) - 1
+
+			for _, tag2 := range e.tags {
+				tTMass := g.TransMass(tag, tag2)
+				// Must check if unitialized or log add won't work.
+				if tCount[tag][tag2] == 0.0 {
+					tCount[tag][tag2] = tTMass
+				} else {
+					tCount[tag][tag2] = e.s.Add(tCount[tag][tag2], tTMass)
+				}
+			}
+
+			lastWordIndex := len(sentence) - 1
 			for iW, word := range sentence {
-				p := e.s.Exit(g.ComputeP(tag, iW))
-				eCount[tag][word] += p
-			  tagCount[tag] += p
-				if (iW < limit) {
-					tagTagCount[tag] += p
+				eMass := g.ComputeP(tag, iW)
+				// Must check if unitialized or log add won't work.
+				if eCount[tag][word] == 0.0 {
+					eCount[tag][word] = eMass
+				} else {
+					eCount[tag][word] = e.s.Add(eCount[tag][word], eMass)
+				}
+				// Must check if unitialized or log add won't work.
+				if tagCount[tag] == 0.0 {
+					tagCount[tag] = eMass
+				} else {
+					tagCount[tag] = e.s.Add(tagCount[tag], eMass)
+				}
+
+				// All but last word in sentence
+				if (iW < lastWordIndex) {
+					if tagTagCount[tag] == 0.0 {
+						tagTagCount[tag] = eMass
+					} else {
+						tagTagCount[tag] = e.s.Add(tagTagCount[tag], eMass)
+					}
 				}
 			}
 		}
@@ -68,28 +99,32 @@ func (e *EM) EStep() (*Initial, *Transition, *Emission, *Initial, *Initial) {
 }
 
 func (e *EM) MStep(iP, tC, ttC *Initial, tP *Transition, eP *Emission) {
-	lS := float64(len(e.sentences))
+	sLength := e.s.Enter(float64(len(e.sentences)))
+
 	for _, tag := range e.tags {
-		(*iP)[tag] = (*iP)[tag] / lS
+		(*iP)[tag] = e.s.Div((*iP)[tag], sLength)
+
 		tagCount := (*tC)[tag]
-		tagTagCount := (*ttC)[tag]
+		tagToTagCount := (*ttC)[tag]
+
 		for _, tag2 := range e.tags {
-			(*tP)[tag][tag2] = (*tP)[tag][tag2] /  tagTagCount
+			(*tP)[tag][tag2] = e.s.Div((*tP)[tag][tag2], tagToTagCount)
 		}
+
 		for word, _ := range (*eP)[tag] {
-			(*eP)[tag][word] = (*eP)[tag][word] / tagCount
+			(*eP)[tag][word] = e.s.Div((*eP)[tag][word], tagCount)
 		}
 	}
 }
 
-func (e *EM) ReenterSpace(iP *Initial, tP *Transition, eP *Emission) {
+func (e *EM) Apply(iP *Initial, tP *Transition, eP *Emission, f func (float64) float64) {
 	for _, tag := range e.tags {
-		(*iP)[tag] = e.s.Enter((*iP)[tag])
+		(*iP)[tag] = f((*iP)[tag])
 		for _, tag2 := range e.tags {
-			(*tP)[tag][tag2] = e.s.Enter((*tP)[tag][tag2])
+			(*tP)[tag][tag2] = f((*tP)[tag][tag2])
 		}
 		for _, word := range e.words {
-			(*eP)[tag][word] = e.s.Enter((*eP)[tag][word])
+			(*eP)[tag][word] = f((*eP)[tag][word])
 		}
 	}
 }

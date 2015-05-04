@@ -55,9 +55,9 @@ func EMLoop(index int, em *hmm.EM) (hmm.Initial, hmm.Transition, hmm.Emission) {
 		t = em.T()
 		e = em.E()
 		if Converges(prevT, t, prevE, e) {
-	    log.Printf("Converges!\n", x)
+	    log.Printf("Converges!\n")
 		} else {
-	    log.Printf("Does not converge\n", x)
+	    log.Printf("Does not converge\n")
 		}
 	}
 	return i, t, e
