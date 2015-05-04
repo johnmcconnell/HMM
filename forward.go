@@ -3,88 +3,91 @@ package hmm
 import(
 	"fmt"
 	"bytes"
+	"github.com/johnmcconnell/gologspace"
 )
 
 type Forward struct {
 	tags []Tag
 	sequence []string
-	filled bool
-	trellis *Trellis
-	initialState *InitialState
-	transition *Transition
-	emission *Emission
+	cache *Trellis
+	s gologspace.Space
+	i *Initial
+	t *Transition
+	e *Emission
 }
 
 // NewViterb ...
-func NewForward(tags []Tag, sequence []string, i *InitialState, t *Transition, e *Emission) *Forward {
-	trellis := NewTrellis(tags, len(sequence))
-	v := Forward{tags, sequence, false, trellis, i, t, e}
-	return &v
+func NewForward(tags []Tag, sequence []string, s gologspace.Space, i *Initial, t *Transition, e *Emission) *Forward {
+	cache := NewTrellis(tags, len(sequence))
+	f := Forward{tags, sequence, cache, s, i, t, e}
+	return &f
 }
 
 // String ...
-func (v *Forward) String() string {
-	buffer := bytes.NewBufferString(fmt.Sprintf("Forward: '%s'\n", v.sequence))
-	buffer.WriteString(v.trellis.String())
+func (f *Forward) String() string {
+	buffer := bytes.NewBufferString(fmt.Sprintf("Forward: '%s'\n", f.sequence))
+	buffer.WriteString(f.cache.FormatString(f.s))
 	return fmt.Sprintf(buffer.String())
 }
 
-// ComputeInitialProb ...
-func (v *Forward) ComputeInitialProb(pI, pE float64) float64 {
-	return pI * pE
+// CompInitialP ...
+func (f *Forward) CompInitialP(pI, pE float64) float64 {
+	s := f.s
+	return s.Mul(pI, pE)
 }
 
-// ComputeProb ...
-func (v *Forward) ComputeProb(tag Tag, index int, pE float64) float64 {
+// CompTransP ...
+func (f *Forward) CompTransP(pT, pP float64) float64 {
+	s := f.s
+	return s.Mul(pT, pP)
+}
+
+// CompProb ...
+func (f *Forward) CompP(tag Tag, index int, pE float64) float64 {
 	pSum := 0.0
-	for _, givenTag := range v.tags {
-		prevResult := (*v.trellis)[givenTag][index - 1]
-		prevP := prevResult.Probability
-		pT := v.transition.P(tag, givenTag)
-		pSum += pT * prevP
+	for _, givenTag := range f.tags {
+		prevResult := (*f.cache)[givenTag][index - 1]
+		prevP := prevResult.Prob
+		pT := f.t.P(tag, givenTag)
+		p := f.CompTransP(pT, prevP)
+		if (pSum == 0.0) {
+			pSum = p
+		} else {
+			pSum = f.s.Add(pSum, p)
+		}
 	}
-	return pE * pSum
-}
-
-// Result ...
-func (v *Forward) Result(tag Tag, index int) *Result {
-	if !v.filled {
-		v.FillTrellis()
-	}
-	return (*v.trellis)[tag][index]
+	return f.s.Mul(pE, pSum)
 }
 
 // FillTrellis ...
-func (v *Forward) FillTrellis() {
-	if v.filled {
-		return
+func (f *Forward) FillTrellis() {
+	for i, _ := range f.sequence {
+		f.FillColumn(i)
 	}
-	for i, _ := range v.sequence {
-		v.FillColumn(i)
-	}
-	v.filled = true
 }
 
 // FillColumn ...
-func (v *Forward) FillColumn(index int) {
-	if v.filled {
-		return
+func (f *Forward) FillColumn(index int) {
+	for _, tag := range f.tags {
+	  f.FillValue(tag, index)
 	}
-	for _, tag := range v.tags {
-		(*v.trellis)[tag][index] = v.P(tag, index)
+}
+
+// FillValue ...
+func (f *Forward) FillValue(tag Tag, i int) {
+	v := f.sequence[i]
+	pE := f.e.P(tag, v)
+	if i == 0 {
+		pI := f.i.P(tag)
+		p := f.CompInitialP(pI, pE)
+		(*f.cache)[tag][i] = &Result{"e", p}
+	} else {
+		p := f.CompP(tag, i, pE)
+		(*f.cache)[tag][i] = &Result{"e", p}
 	}
 }
 
 // P ...
-func (v *Forward) P(tag Tag, index int) *Result {
-  value := v.sequence[index]
-  pE := v.emission.P(tag, value)
-	if index == 0 {
-		pI := v.initialState.P(tag)
-		p := v.ComputeInitialProb(pI, pE)
-		return &Result{"e", p}
-	} else {
-		p := v.ComputeProb(tag, index, pE)
-		return &Result{"e", p}
-	}
+func (f *Forward) R(tag Tag, index int) *Result {
+	return (*f.cache)[tag][index]
 }

@@ -8,6 +8,7 @@ import(
 	"io/ioutil"
 	"regexp"
 	"github.com/johnmcconnell/hmm"
+	"github.com/johnmcconnell/gologspace"
 )
 
 type WordCache map[string]bool
@@ -23,21 +24,22 @@ func main() {
 	words := wordCache.Words()
 
 	log.Printf("len: %v", len(tags))
-	i := hmm.UniformI(tags)
-	t := hmm.UniformT(tags)
-	e := hmm.UniformE2(tags, wordCache)
+	s := gologspace.LogSpace{}
+	i := hmm.UniformI(tags, s)
+	t := hmm.UniformT(tags, s)
+	e := hmm.UniformE(hmm.ECache(tagCache), words, s)
 
 	train := ParseTraining(os.Args[1])
 
-	em := hmm.NewEMLog2(tags, words, train, i, t, e)
+	em := hmm.NewEM2(tags, words, train, s, i, t, e)
 
 	i, t, e = EMLoop(8, em)
-	lSentences := BuildLabeled(train, tags, i, t, e)
+	lSentences := BuildLabeled(train, tags, s, i, t, e)
 
 	PrintLabeledSentences(lSentences)
 }
 
-func EMLoop(index int, em *hmm.EMLog) (hmm.InitialState, hmm.Transition, hmm.Emission) {
+func EMLoop(index int, em *hmm.EM) (hmm.Initial, hmm.Transition, hmm.Emission) {
 	i := em.I()
 	t := em.T()
 	e := em.E()
@@ -51,7 +53,7 @@ func EMLoop(index int, em *hmm.EMLog) (hmm.InitialState, hmm.Transition, hmm.Emi
 		e = em.E()
 		if Converges(prevT, t, prevE, e) {
 	    log.Printf("Converges!\n", x)
-			break
+			// break
 		} else {
 	    log.Printf("Does not converge\n", x)
 		}
@@ -102,11 +104,11 @@ func PrintLabeledSentence(sentence []hmm.LabeledWord) {
 }
 
 func BuildLabeled(sentences [][]string,
-tags []hmm.Tag, i hmm.InitialState,
+tags []hmm.Tag, s gologspace.Space, i hmm.Initial,
 t hmm.Transition, e hmm.Emission) [][]hmm.LabeledWord {
 	labeledSentences := make([][]hmm.LabeledWord, len(sentences))
 	for iS, sentence := range sentences {
-	  v := hmm.NewViterbiLog(tags, sentence, &i, &t, &e)
+	  v := hmm.NewViterbi(tags, sentence, s, &i, &t, &e)
 		v.FillTrellis()
 		labeled, err := v.Labeled()
 		if err != nil {
