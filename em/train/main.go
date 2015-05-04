@@ -5,6 +5,7 @@ import(
 	"fmt"
 	"log"
 	"math"
+	"strconv"
 	"io/ioutil"
 	"regexp"
 	"github.com/johnmcconnell/hmm"
@@ -15,28 +16,30 @@ type WordCache map[string]bool
 type LabeledCache map[hmm.Tag]map[string]bool
 
 func main() {
-	if len(os.Args) < 3 {
-		fmt.Println("Usage: train_file lexicon_file")
+	if len(os.Args) < 4 {
+		fmt.Println("Usage: train_file lexicon_file max_iterations")
 		os.Exit(-1)
 	}
 	tagCache, wordCache := ParseLexicon(os.Args[2])
 	tags := tagCache.Tags()
 	words := wordCache.Words()
 
-	log.Printf("len: %v", len(tags))
 	s := gologspace.LogSpace{}
 	i := hmm.UniformI(tags, s)
 	t := hmm.UniformT(tags, s)
 	e := hmm.UniformE(hmm.ECache(tagCache), words, s)
 
 	train := ParseTraining(os.Args[1])
+	maxI, err := strconv.Atoi(os.Args[3])
+	if err != nil {
+		log.Printf("%s is not a valid number", os.Args[3])
+		os.Exit(-1)
+	}
+	em := hmm.NewEM(tags, words, train, s, i, t, e)
+	EMLoop(maxI, em)
+	labeledSentences := BuildLabeled(train, tags, s, em.I(), em.T(), em.E())
 
-	em := hmm.NewEM2(tags, words, train, s, i, t, e)
-
-	i, t, e = EMLoop(8, em)
-	lSentences := BuildLabeled(train, tags, s, i, t, e)
-
-	PrintLabeledSentences(lSentences)
+	PrintLabeledSentences(labeledSentences)
 }
 
 func EMLoop(index int, em *hmm.EM) (hmm.Initial, hmm.Transition, hmm.Emission) {
@@ -53,7 +56,6 @@ func EMLoop(index int, em *hmm.EM) (hmm.Initial, hmm.Transition, hmm.Emission) {
 		e = em.E()
 		if Converges(prevT, t, prevE, e) {
 	    log.Printf("Converges!\n", x)
-			// break
 		} else {
 	    log.Printf("Does not converge\n", x)
 		}
